@@ -77,6 +77,10 @@ function buildSeedData() {
 
 /* ---------- File read/write ---------- */
 function ensureDbFile() {
+  const dir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
   if (!fs.existsSync(DB_PATH)) {
     const seed = { sarees: buildSeedData(), nextId: 21 };
     fs.writeFileSync(DB_PATH, JSON.stringify(seed, null, 2));
