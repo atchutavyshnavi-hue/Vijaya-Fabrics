@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Vijaya Fabrics</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"></span>
+      <span>
+        <span class="brand-name">Vijaya Fabrics</span><br>
+        <span class="brand-sub">Chirala · Since the loom</span>
+      </span>
+    </a>
+    <nav class="links">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="catalog.html" data-page="catalog.html">Catalog</a>
+      <a href="index.html#about">About</a>
+      <a href="index.html#contact">Contact</a>
+      <a href="admin.html" data-page="admin.html">Admin</a>
+    </nav>
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<div class="admin-shell" id="loginShell">
+  <div class="login-card">
+    <span class="eyebrow">Staff Only</span>
+    <h2 style="margin-bottom:.2em;">Admin Login</h2>
+    <p style="margin-bottom:1.4em;">Sign in to add, edit or remove sarees from the live catalog.</p>
+    <div class="form-field">
+      <label for="adminPass">Password</label>
+      <input type="password" id="adminPass" placeholder="Enter admin password">
+    </div>
+    <button class="btn btn-primary" id="loginBtn" style="width:100%; justify-content:center;">Log In</button>
+    <p id="loginError" style="color:var(--ink-maroon); font-size:.82rem; margin-top:1em; display:none;"></p>
+    <p style="font-size:.76rem; margin-top:1.6em; color:var(--charcoal-soft);">Demo password: <code>vijaya2026</code> (set in the backend's <code>.env</code> file) — a real deployment would use proper staff accounts.</p>
+  </div>
+</div>
+
+<section class="admin-panel" id="adminPanel" style="display:none;">
+  <div class="container">
+    <div class="section-head" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1em;">
+      <div>
+        <span class="eyebrow">Catalog Management</span>
+        <h1 style="font-size:clamp(1.8rem,3.5vw,2.4rem);">Manage sarees</h1>
+        <p>Changes here save to the server and appear for every visitor immediately.</p>
+      </div>
+      <button class="btn btn-outline btn-sm" id="logoutBtn">Log Out</button>
+    </div>
+
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3 id="formTitle">Add a new saree</h3>
+        <form id="sareeForm">
+          <input type="hidden" id="editId">
+          <div class="form-field">
+            <label for="fName">Saree Name</label>
+            <input type="text" id="fName" required placeholder="e.g. Mangalagiri Pattu Saree — Maroon Gold">
+          </div>
+          <div class="form-field">
+            <label for="fCategory">Category</label>
+            <select id="fCategory" required></select>
+          </div>
+          <div class="form-field">
+            <label for="fSubtype">Subtype</label>
+            <select id="fSubtype" required></select>
+          </div>
+          <div class="form-field">
+            <label for="fPrice">Price (₹)</label>
+            <input type="number" id="fPrice" min="0" required placeholder="e.g. 2999">
+          </div>
+          <div class="form-field">
+            <label for="fFabric">Fabric</label>
+            <input type="text" id="fFabric" required placeholder="e.g. Pattu Silk">
+          </div>
+          <div class="form-field">
+            <label for="fDesc">Description</label>
+            <textarea id="fDesc" rows="3" required placeholder="Short description customers will see"></textarea>
+          </div>
+          <div class="form-field">
+            <label for="fImage">Photo (optional — leave blank to auto-generate a swatch)</label>
+            <input type="file" id="fImage" accept="image/*">
+            <img id="fImagePreview" style="margin-top:10px; width:90px; height:112px; object-fit:cover; border-radius:4px; display:none;">
+          </div>
+          <div class="form-field">
+            <label><input type="checkbox" id="fFeatured" style="width:auto; margin-right:8px;">Show on homepage as Featured</label>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button type="submit" class="btn btn-primary" id="saveBtn">Save Saree</button>
+            <button type="button" class="btn btn-outline" id="cancelEdit" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="admin-card">
+        <h3>Current catalog (<span id="countLabel">0</span>)</h3>
+        <div style="overflow:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th></th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-outline btn-sm" id="resetBtn" style="margin-top:1.4em;">Reset to sample catalog</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="container footer-bottom">
+    <span>© <span id="year"></span> Vijaya Fabrics, Chirala. All rights reserved.</span>
+    <span>Admin panel — internal use only.</span>
+  </div>
+</footer>
+
+<script src="js/common.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

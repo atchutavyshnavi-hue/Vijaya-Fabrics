@@ -1,0 +1,16 @@
+# Dependencies
+backend/node_modules/
+
+# Environment secrets
+backend/.env
+
+# Runtime data (auto-generated on first run)
+backend/data/db.json
+
+# Uploaded photos (keep the folder, not the contents)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# OS/editor junk
+.DS_Store
+*.log
