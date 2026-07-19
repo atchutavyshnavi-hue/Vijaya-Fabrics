@@ -59,83 +59,95 @@ function validateBody(body, { partial = false } = {}) {
 /* ---------- Public routes ---------- */
 
 // GET /api/sarees?category=&subtype=
-router.get("/", (req, res) => {
-  const { category, subtype } = req.query;
-  const list = db.getAllSarees({ category, subtype });
-  res.json(list);
+router.get("/", async (req, res, next) => {
+  try {
+    const { category, subtype } = req.query;
+    const list = await db.getAllSarees({ category, subtype });
+    res.json(list);
+  } catch (err) { next(err); }
 });
 
 // GET /api/sarees/:id
-router.get("/:id", (req, res) => {
-  const saree = db.getSareeById(req.params.id);
-  if (!saree) return res.status(404).json({ error: "Saree not found." });
-  res.json(saree);
+router.get("/:id", async (req, res, next) => {
+  try {
+    const saree = await db.getSareeById(req.params.id);
+    if (!saree) return res.status(404).json({ error: "Saree not found." });
+    res.json(saree);
+  } catch (err) { next(err); }
 });
 
 /* ---------- Admin-only routes ---------- */
 
 // POST /api/sarees  (multipart/form-data, field "image" optional)
-router.post("/", requireAdmin, upload.single("image"), (req, res) => {
-  const errors = validateBody(req.body);
-  if (errors.length) return res.status(400).json({ error: errors.join(" ") });
+router.post("/", requireAdmin, upload.single("image"), async (req, res, next) => {
+  try {
+    const errors = validateBody(req.body);
+    if (errors.length) return res.status(400).json({ error: errors.join(" ") });
 
-  const { name, category, subtype, price, fabric, description } = req.body;
-  const featured = req.body.featured === "true" || req.body.featured === true;
+    const { name, category, subtype, price, fabric, description } = req.body;
+    const featured = req.body.featured === "true" || req.body.featured === true;
 
-  let image;
-  if (req.file) {
-    image = `/uploads/${req.file.filename}`;
-  } else {
-    const cat = getCategory(category);
-    image = generateSwatch(name, cat.color, Date.now() % 1000);
-  }
+    let image;
+    if (req.file) {
+      image = `/uploads/${req.file.filename}`;
+    } else {
+      const cat = getCategory(category);
+      image = generateSwatch(name, cat.color, Date.now() % 1000);
+    }
 
-  const saree = db.addSaree({
-    name: name.trim(),
-    category,
-    subtype,
-    price: Number(price),
-    fabric: fabric.trim(),
-    description: description.trim(),
-    image,
-    featured
-  });
+    const saree = await db.addSaree({
+      name: name.trim(),
+      category,
+      subtype,
+      price: Number(price),
+      fabric: fabric.trim(),
+      description: description.trim(),
+      image,
+      featured
+    });
 
-  res.status(201).json(saree);
+    res.status(201).json(saree);
+  } catch (err) { next(err); }
 });
 
 // PUT /api/sarees/:id  (multipart/form-data, field "image" optional)
-router.put("/:id", requireAdmin, upload.single("image"), (req, res) => {
-  const existing = db.getSareeById(req.params.id);
-  if (!existing) return res.status(404).json({ error: "Saree not found." });
+router.put("/:id", requireAdmin, upload.single("image"), async (req, res, next) => {
+  try {
+    const existing = await db.getSareeById(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Saree not found." });
 
-  const errors = validateBody(req.body, { partial: true });
-  if (errors.length) return res.status(400).json({ error: errors.join(" ") });
+    const errors = validateBody(req.body, { partial: true });
+    if (errors.length) return res.status(400).json({ error: errors.join(" ") });
 
-  const updates = {};
-  ["name", "category", "subtype", "fabric", "description"].forEach((key) => {
-    if (req.body[key] !== undefined) updates[key] = req.body[key].trim();
-  });
-  if (req.body.price !== undefined) updates.price = Number(req.body.price);
-  if (req.body.featured !== undefined) updates.featured = req.body.featured === "true" || req.body.featured === true;
-  if (req.file) updates.image = `/uploads/${req.file.filename}`;
+    const updates = {};
+    ["name", "category", "subtype", "fabric", "description"].forEach((key) => {
+      if (req.body[key] !== undefined) updates[key] = req.body[key].trim();
+    });
+    if (req.body.price !== undefined) updates.price = Number(req.body.price);
+    if (req.body.featured !== undefined) updates.featured = req.body.featured === "true" || req.body.featured === true;
+    if (req.file) updates.image = `/uploads/${req.file.filename}`;
 
-  const updated = db.updateSaree(req.params.id, updates);
-  res.json(updated);
+    const updated = await db.updateSaree(req.params.id, updates);
+    res.json(updated);
+  } catch (err) { next(err); }
 });
 
 // DELETE /api/sarees/:id
-router.delete("/:id", requireAdmin, (req, res) => {
-  const existing = db.getSareeById(req.params.id);
-  if (!existing) return res.status(404).json({ error: "Saree not found." });
-  db.deleteSaree(req.params.id);
-  res.json({ success: true });
+router.delete("/:id", requireAdmin, async (req, res, next) => {
+  try {
+    const existing = await db.getSareeById(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Saree not found." });
+    await db.deleteSaree(req.params.id);
+    res.json({ success: true });
+  } catch (err) { next(err); }
 });
 
 // POST /api/sarees/reset/seed  — restore the original sample catalog
-router.post("/reset/seed", requireAdmin, (req, res) => {
-  const sarees = db.resetToSeed();
-  res.json(sarees);
+router.post("/reset/seed", requireAdmin, async (req, res, next) => {
+  try {
+    const sarees = await db.resetToSeed();
+    res.json(sarees);
+  } catch (err) { next(err); }
 });
 
 module.exports = router;
