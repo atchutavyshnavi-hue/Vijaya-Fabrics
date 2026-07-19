@@ -63,20 +63,41 @@ function renderGrid() {
   empty.style.display = "none";
   grid.innerHTML = list.map(cardHtml).join("");
   grid.querySelectorAll(".product-card").forEach(card => {
-    card.addEventListener("click", () => openModal(Number(card.dataset.id)));
+    card.addEventListener("click", () => openModal(card.dataset.id));
+  });
+  grid.querySelectorAll("[data-quick-add]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      quickAddToCart(btn.dataset.quickAdd);
+    });
   });
 }
 
 function cardHtml(p) {
   return `
     <div class="product-card" data-id="${p.id}">
-      <div class="thumb"><img src="${p.image}" alt="${p.name}" loading="lazy"></div>
+      <div class="thumb" style="position:relative;">
+        <img src="${p.image}" alt="${p.name}" loading="lazy">
+        <button class="btn btn-sm btn-gold" data-quick-add="${p.id}" style="position:absolute; bottom:10px; right:10px;">+ Cart</button>
+      </div>
       <div class="info">
         <span class="sub">${p.subtype}</span>
         <h4>${p.name}</h4>
         <span class="price">${formatINR(p.price)}</span>
       </div>
     </div>`;
+}
+
+async function quickAddToCart(sareeId) {
+  requireLogin(async () => {
+    try {
+      await api.cart.add(sareeId, 1);
+      await updateCartBadge();
+      vfToast("Added to cart");
+    } catch (err) {
+      vfToast(err.message || "Could not add to cart.", true);
+    }
+  });
 }
 
 function openModal(id) {
@@ -95,6 +116,7 @@ function openModal(id) {
       <div class="spec-row"><span>Category</span><strong>${cat ? cat.label : p.category}</strong></div>
       <div class="spec-row"><span>Weave / Origin</span><strong>${p.subtype}</strong></div>
       <div style="margin-top:1.6em; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-gold" id="modalAddCart">Add to Cart</button>
         <a class="btn btn-primary" target="_blank" rel="noopener"
            href="https://wa.me/919999999999?text=${encodeURIComponent("Hello, I'd like to know more about: " + p.name)}">
            Enquire on WhatsApp
@@ -106,6 +128,7 @@ function openModal(id) {
   document.querySelectorAll(".modal-close, #modalCloseBtn").forEach(b =>
     b.addEventListener("click", closeModal)
   );
+  document.getElementById("modalAddCart").addEventListener("click", () => quickAddToCart(p.id));
   history.replaceState(null, "", `catalog.html?product=${id}`);
 }
 
@@ -134,7 +157,7 @@ async function init() {
     renderGrid();
 
     const productParam = new URLSearchParams(location.search).get("product");
-    if (productParam) openModal(Number(productParam));
+    if (productParam) openModal(productParam);
   } catch (err) {
     document.getElementById("loadingState").textContent = err.message || "Could not load the catalog. Please refresh.";
   }

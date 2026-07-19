@@ -24,6 +24,8 @@
       <a href="index.html#about">About</a>
       <a href="index.html#contact">Contact</a>
       <a href="admin.html" data-page="admin.html">Admin</a>
+      <a href="cart.html" class="nav-cart" data-page="cart.html">🛍 Cart<span class="cart-badge" id="cartBadge" style="display:none;">0</span></a>
+      <a href="#" class="nav-account" id="navAccountLink">Login</a>
     </nav>
     <button class="nav-toggle" aria-label="Menu">☰</button>
   </div>
@@ -84,8 +86,56 @@
   <div class="modal" id="modalContent"></div>
 </div>
 
+<div class="modal-backdrop" id="authModalBackdrop">
+  <div class="modal auth-modal">
+    <div class="modal-body" style="padding:32px 30px;">
+      <button class="modal-close auth-close" aria-label="Close">×</button>
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-mode="login">Login</div>
+        <div class="auth-tab" data-mode="signup">Sign Up</div>
+      </div>
+      <div class="auth-error" id="authError"></div>
+
+      <form class="auth-panel" data-mode="login" id="loginForm">
+        <div class="form-field">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required>
+        </div>
+        <div class="form-field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Log In</button>
+        <p class="auth-switch">New here? <a href="#" onclick="setAuthTab('signup'); return false;">Create an account</a></p>
+      </form>
+
+      <form class="auth-panel" data-mode="signup" id="signupForm" style="display:none;">
+        <div class="form-field">
+          <label for="signupName">Full name</label>
+          <input type="text" id="signupName" required>
+        </div>
+        <div class="form-field">
+          <label for="signupEmail">Email</label>
+          <input type="email" id="signupEmail" required>
+        </div>
+        <div class="form-field">
+          <label for="signupPhone">Phone</label>
+          <input type="tel" id="signupPhone" required minlength="10">
+        </div>
+        <div class="form-field">
+          <label for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Create Account</button>
+        <p class="auth-switch">Already have an account? <a href="#" onclick="setAuthTab('login'); return false;">Log in</a></p>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="js/common.js"></script>
 <script src="js/api.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/catalog.js"></script>
 </body>
 </html>

@@ -291,3 +291,100 @@ footer.site a:hover{color:var(--zari-gold-light);}
 
 .mobile-only{display:none;}
 @media (max-width:820px){.mobile-only{display:block;} .desktop-only{display:none;}}
+
+/* ---------- Nav: cart + account (added for customer accounts/cart/checkout) ---------- */
+.nav-cart{position:relative; display:inline-flex; align-items:center; gap:.35em;}
+.cart-badge{
+  background:var(--ink-maroon); color:var(--white); font-size:.68rem; font-weight:700;
+  border-radius:20px; padding:.05em .5em; min-width:1.4em; text-align:center; line-height:1.5;
+}
+.nav-account{white-space:nowrap;}
+
+/* ---------- Auth modal (login / signup) ---------- */
+.auth-modal{max-width:420px; grid-template-columns:1fr;}
+.auth-tabs{display:flex; border-bottom:1px solid var(--line); margin-bottom:1.6em;}
+.auth-tab{
+  flex:1; text-align:center; padding:.9em 0; font-weight:600; font-size:.92rem;
+  color:var(--charcoal-soft); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+}
+.auth-tab.active{color:var(--ink-maroon); border-bottom-color:var(--ink-maroon);}
+.auth-error{
+  background:#FBE9E7; color:var(--ink-maroon-dark); font-size:.82rem; padding:.7em 1em;
+  border-radius:var(--radius); margin-bottom:1em; display:none;
+}
+.auth-error.show{display:block;}
+.auth-switch{font-size:.84rem; color:var(--charcoal-soft); text-align:center; margin-top:1.2em;}
+.auth-switch a{color:var(--ink-maroon); font-weight:600;}
+
+/* ---------- Cart & quantity stepper ---------- */
+.qty-stepper{display:inline-flex; align-items:center; border:1.5px solid var(--line); border-radius:var(--radius);}
+.qty-stepper button{
+  width:30px; height:30px; border:none; background:none; font-size:1rem; cursor:pointer; color:var(--ink-maroon);
+}
+.qty-stepper span{min-width:28px; text-align:center; font-size:.88rem; font-weight:600;}
+
+.cart-layout{display:grid; grid-template-columns:1.6fr 1fr; gap:32px; align-items:flex-start;}
+@media (max-width:900px){.cart-layout{grid-template-columns:1fr;}}
+.cart-line{
+  display:grid; grid-template-columns:80px 1fr auto auto; gap:16px; align-items:center;
+  padding:16px 0; border-bottom:1px solid var(--line);
+}
+@media (max-width:560px){.cart-line{grid-template-columns:64px 1fr; grid-template-areas:"img info" "img qty" "img total"; row-gap:6px;}}
+.cart-line img{width:80px; height:100px; object-fit:cover; border-radius:var(--radius);}
+.cart-line .cl-name{font-family:'Cormorant Garamond',serif; font-weight:600; font-size:1.05rem; color:var(--charcoal); margin-bottom:.2em;}
+.cart-line .cl-sub{font-size:.76rem; color:var(--charcoal-soft); text-transform:uppercase; letter-spacing:.06em;}
+.cart-line .cl-price{color:var(--ink-maroon); font-weight:700; font-size:.92rem; margin-top:.3em;}
+.cart-line .cl-remove{background:none; border:none; color:var(--charcoal-soft); font-size:.78rem; cursor:pointer; text-decoration:underline; margin-top:.4em;}
+.summary-card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:26px; position:sticky; top:100px;}
+.summary-row{display:flex; justify-content:space-between; padding:.5em 0; font-size:.9rem; color:var(--charcoal-soft);}
+.summary-row.total{border-top:1px dashed var(--line); margin-top:.5em; padding-top:1em; font-size:1.05rem; font-weight:700; color:var(--charcoal);}
+
+/* ---------- Addresses & tabs (profile page) ---------- */
+.tabbar{display:flex; gap:6px; margin-bottom:2em; flex-wrap:wrap;}
+.tabbar button{
+  padding:.6em 1.3em; border-radius:30px; border:1.5px solid var(--line); background:var(--white);
+  font-size:.85rem; font-weight:600; cursor:pointer; color:var(--charcoal-soft);
+}
+.tabbar button.active{background:var(--ink-maroon); border-color:var(--ink-maroon); color:var(--white);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.address-card{
+  background:var(--white); border:1px solid var(--line); border-radius:var(--radius);
+  padding:18px 20px; margin-bottom:14px; position:relative;
+}
+.address-card .badge-default{position:absolute; top:16px; right:18px;}
+.address-card .addr-actions{display:flex; gap:10px; margin-top:.8em;}
+.address-card .addr-actions button{background:none; border:none; font-size:.8rem; color:var(--ink-maroon); cursor:pointer; text-decoration:underline; padding:0;}
+
+/* ---------- Order tracking stepper ---------- */
+.order-card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; margin-bottom:16px;}
+.order-card-head{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:.6em;}
+.order-card-head .onum{font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1.15rem; color:var(--ink-maroon);}
+.order-card-head .odate{font-size:.78rem; color:var(--charcoal-soft);}
+.status-pill{display:inline-block; padding:.3em .8em; border-radius:20px; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;}
+.status-pill.received, .status-pill.processing{background:#FDF0DD; color:#8A5B14;}
+.status-pill.packed, .status-pill.shipped, .status-pill.out-for-delivery{background:#E2EEFB; color:#1F4B7A;}
+.status-pill.delivered{background:#E3F3E5; color:#1F6B34;}
+.status-pill.cancelled{background:#FBE4E4; color:var(--ink-maroon-dark);}
+
+.tracker{display:flex; margin:1.4em 0 .6em; overflow-x:auto; padding-bottom:4px;}
+.tracker-step{flex:1; min-width:96px; text-align:center; position:relative;}
+.tracker-step .dot{
+  width:16px; height:16px; border-radius:50%; background:var(--line); margin:0 auto .5em;
+  border:3px solid var(--white); box-shadow:0 0 0 1px var(--line); position:relative; z-index:2;
+}
+.tracker-step.done .dot{background:var(--ink-maroon); box-shadow:0 0 0 1px var(--ink-maroon);}
+.tracker-step::before{
+  content:""; position:absolute; top:8px; left:-50%; width:100%; height:2px; background:var(--line); z-index:1;
+}
+.tracker-step:first-child::before{display:none;}
+.tracker-step.done::before{background:var(--ink-maroon);}
+.tracker-step span{font-size:.68rem; color:var(--charcoal-soft); display:block;}
+.tracker-step.done span{color:var(--ink-maroon); font-weight:600;}
+.tracker-step.cancelled .dot{background:var(--ink-maroon-dark); box-shadow:0 0 0 1px var(--ink-maroon-dark);}
+
+.order-items-mini{margin-top:1em;}
+.order-items-mini .oi-row{display:flex; justify-content:space-between; font-size:.85rem; padding:.35em 0; border-bottom:1px dashed var(--line);}
+
+.account-nav{margin-bottom:.4em;}
+.account-nav .who{font-weight:600; color:var(--ink-maroon);}

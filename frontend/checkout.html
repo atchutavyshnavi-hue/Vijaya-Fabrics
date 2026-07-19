@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Checkout — Vijaya Fabrics</title>
-<meta name="description" content="Complete your order with Vijaya Fabrics, Chirala.">
+<title>Catalog — Vijaya Fabrics</title>
+<meta name="description" content="Browse silk, cotton, fancy, handloom and pattu sarees, and Punjabi dress materials from Vijaya Fabrics, Chirala.">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -34,99 +34,22 @@
 <section style="padding-bottom:0;">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Almost There</span>
-      <h1 style="font-size:clamp(2rem,4vw,2.8rem);">Checkout</h1>
-      <p>Confirm where this order should go, then place it — our team will call to confirm before dispatch.</p>
+      <span class="eyebrow">Full Catalog</span>
+      <h1 style="font-size:clamp(2rem,4vw,2.8rem);">Every saree, sorted by weave</h1>
+      <p>Tap a category, then a subtype, to narrow things down. Tap any saree for full details and to enquire.</p>
     </div>
+    <div class="filters" id="catFilters"></div>
+    <div class="subfilters" id="subFilters"></div>
   </div>
 </section>
 
 <section style="padding-top:0;">
   <div class="container">
-    <div class="loading-state" id="loadingState">Loading checkout…</div>
-
+    <div class="loading-state" id="loadingState">Loading catalog…</div>
+    <div class="product-grid" id="productGrid"></div>
     <div class="empty-state" id="emptyState" style="display:none;">
-      <h3 id="emptyTitle">Your cart is empty</h3>
-      <p id="emptyText">Add a few sarees to your cart before checking out.</p>
-      <a href="catalog.html" class="btn btn-primary" style="margin-top:1em;" id="emptyCta">Browse the Catalog</a>
-    </div>
-
-    <div class="cart-layout" id="checkoutLayout" style="display:none;">
-      <div>
-        <div class="admin-card" style="margin-bottom:20px;">
-          <h3 style="margin-top:0;">Deliver To</h3>
-          <div id="addressList"></div>
-
-          <div id="addAddressToggle">
-            <button type="button" class="btn btn-outline btn-sm" id="showAddAddressBtn">+ Add a new address</button>
-          </div>
-
-          <form id="addAddressForm" style="display:none; margin-top:1.2em;">
-            <div class="form-field">
-              <label for="caLabel">Label</label>
-              <input type="text" id="caLabel" placeholder="e.g. Home, Office" value="Home">
-            </div>
-            <div class="form-field">
-              <label for="caLine1">Address Line 1</label>
-              <input type="text" id="caLine1" required>
-            </div>
-            <div class="form-field">
-              <label for="caLine2">Address Line 2 (optional)</label>
-              <input type="text" id="caLine2">
-            </div>
-            <div class="form-field">
-              <label for="caCity">City</label>
-              <input type="text" id="caCity" required>
-            </div>
-            <div class="form-field">
-              <label for="caState">State</label>
-              <input type="text" id="caState" required value="Andhra Pradesh">
-            </div>
-            <div class="form-field">
-              <label for="caPincode">PIN Code</label>
-              <input type="text" id="caPincode" required pattern="\d{6}" maxlength="6" placeholder="6-digit PIN">
-            </div>
-            <div style="display:flex; gap:10px;">
-              <button type="submit" class="btn btn-primary btn-sm">Save Address</button>
-              <button type="button" class="btn btn-outline btn-sm" id="cancelAddAddress">Cancel</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="admin-card">
-          <h3 style="margin-top:0;">Recipient Details</h3>
-          <div class="form-field">
-            <label for="recName">Full Name</label>
-            <input type="text" id="recName" required>
-          </div>
-          <div class="form-field">
-            <label for="recPhone">Phone (for delivery updates)</label>
-            <input type="tel" id="recPhone" required minlength="10">
-          </div>
-          <div class="form-field">
-            <label>Payment Method</label>
-            <select id="paymentMethod">
-              <option value="Cash on Delivery">Cash on Delivery</option>
-            </select>
-            <p style="font-size:.78rem; color:var(--charcoal-soft); margin-top:.5em;">Online payment is coming soon — every order today ships Cash on Delivery.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="summary-card">
-        <h3 style="margin-top:0;">Order Summary</h3>
-        <div id="summaryLines"></div>
-        <div class="summary-row total"><span>Total</span><span id="summaryTotal">₹0</span></div>
-        <button class="btn btn-primary" id="placeOrderBtn" style="width:100%; justify-content:center; margin-top:1.2em;">Place Order</button>
-        <p class="auth-error" id="checkoutError" style="display:none;"></p>
-      </div>
-    </div>
-
-    <div class="empty-state" id="successState" style="display:none;">
-      <h3>Order placed! 🎉</h3>
-      <p id="successText"></p>
-      <a href="profile.html?tab=orders" class="btn btn-primary" style="margin-top:1em;">Track Your Order</a>
-      <a href="catalog.html" class="btn btn-outline" style="margin-top:1em; margin-left:10px;">Keep Browsing</a>
+      <h3>No sarees match this filter yet</h3>
+      <p>Try another category, or message us on WhatsApp — we may have it in the shop even if it's not listed here.</p>
     </div>
   </div>
 </section>
@@ -158,6 +81,10 @@
 </footer>
 
 <a class="whatsapp-float" href="https://wa.me/919999999999" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">💬</a>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalContent"></div>
+</div>
 
 <div class="modal-backdrop" id="authModalBackdrop">
   <div class="modal auth-modal">
@@ -209,6 +136,6 @@
 <script src="js/common.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/checkout.js"></script>
+<script src="js/catalog.js"></script>
 </body>
 </html>
