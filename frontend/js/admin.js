@@ -153,10 +153,10 @@ async function renderTable() {
   `).join("");
 
   body.querySelectorAll("[data-edit]").forEach(btn =>
-    btn.addEventListener("click", () => loadForEdit(Number(btn.dataset.edit), list))
+    btn.addEventListener("click", () => loadForEdit(btn.dataset.edit, list))
   );
   body.querySelectorAll("[data-del]").forEach(btn =>
-    btn.addEventListener("click", () => handleDelete(Number(btn.dataset.del)))
+    btn.addEventListener("click", () => handleDelete(btn.dataset.del))
   );
 }
 
