@@ -1,3 +1,4 @@
+//customerAuth.js file
 const express = require("express");
 const bcrypt = require("bcryptjs");
 
