@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account — Vijaya Fabrics</title>
+<meta name="description" content="Manage your Vijaya Fabrics account — personal info, saved addresses and order history.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="nav-row">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"></span>
+      <span>
+        <span class="brand-name">Vijaya Fabrics</span><br>
+        <span class="brand-sub">Chirala · Since the loom</span>
+      </span>
+    </a>
+    <nav class="links">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="catalog.html" data-page="catalog.html">Catalog</a>
+      <a href="index.html#about">About</a>
+      <a href="index.html#contact">Contact</a>
+      <a href="admin.html" data-page="admin.html">Admin</a>
+      <a href="cart.html" class="nav-cart" data-page="cart.html">🛍 Cart<span class="cart-badge" id="cartBadge" style="display:none;">0</span></a>
+      <a href="#" class="nav-account" id="navAccountLink">Login</a>
+    </nav>
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<section style="padding-bottom:0;">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Your Account</span>
+      <h1 style="font-size:clamp(2rem,4vw,2.8rem);">My Account</h1>
+      <p class="account-nav" id="whoLine"></p>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="loading-state" id="loadingState">Loading your account…</div>
+
+    <div class="empty-state" id="loggedOutState" style="display:none;">
+      <h3>Log in to view your account</h3>
+      <p>Personal info, saved addresses and order history live here once you're logged in.</p>
+      <button class="btn btn-primary" id="profileLoginBtn" style="margin-top:1em;">Login / Sign Up</button>
+    </div>
+
+    <div id="profileContent" style="display:none;">
+      <div class="tabbar" id="tabbar">
+        <button data-tab="info" class="active">Personal Info</button>
+        <button data-tab="addresses">Saved Addresses</button>
+        <button data-tab="orders">Order History</button>
+      </div>
+
+      <div class="tab-panel active" data-tab-panel="info">
+        <div class="admin-grid">
+          <div class="admin-card">
+            <h3 style="margin-top:0;">Personal Information</h3>
+            <form id="infoForm">
+              <div class="form-field">
+                <label for="infoName">Full Name</label>
+                <input type="text" id="infoName" required>
+              </div>
+              <div class="form-field">
+                <label for="infoEmail">Email</label>
+                <input type="email" id="infoEmail" disabled>
+              </div>
+              <div class="form-field">
+                <label for="infoPhone">Phone</label>
+                <input type="tel" id="infoPhone" required minlength="10">
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+            </form>
+          </div>
+
+          <div class="admin-card">
+            <h3 style="margin-top:0;">Change Password</h3>
+            <form id="passwordForm">
+              <div class="form-field">
+                <label for="curPassword">Current Password</label>
+                <input type="password" id="curPassword" required>
+              </div>
+              <div class="form-field">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" required minlength="6">
+              </div>
+              <p class="auth-error" id="passwordError" style="display:none;"></p>
+              <button type="submit" class="btn btn-outline btn-sm">Update Password</button>
+            </form>
+            <div style="margin-top:2em; padding-top:1.4em; border-top:1px solid var(--line);">
+              <h3 style="margin-top:0;">Change Account</h3>
+              <p style="font-size:.85rem;">Log out of this account to sign in as someone else.</p>
+              <button class="btn btn-outline btn-sm" id="logoutBtnProfile">Log Out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="addresses">
+        <div class="admin-card">
+          <h3 style="margin-top:0;">Saved Addresses</h3>
+          <div id="addressListProfile"></div>
+          <button type="button" class="btn btn-outline btn-sm" id="showAddAddressBtnProfile" style="margin-top:.6em;">+ Add a new address</button>
+          <form id="addAddressFormProfile" style="display:none; margin-top:1.2em; max-width:420px;">
+            <div class="form-field">
+              <label for="paLabel">Label</label>
+              <input type="text" id="paLabel" placeholder="e.g. Home, Office" value="Home">
+            </div>
+            <div class="form-field">
+              <label for="paLine1">Address Line 1</label>
+              <input type="text" id="paLine1" required>
+            </div>
+            <div class="form-field">
+              <label for="paLine2">Address Line 2 (optional)</label>
+              <input type="text" id="paLine2">
+            </div>
+            <div class="form-field">
+              <label for="paCity">City</label>
+              <input type="text" id="paCity" required>
+            </div>
+            <div class="form-field">
+              <label for="paState">State</label>
+              <input type="text" id="paState" required value="Andhra Pradesh">
+            </div>
+            <div class="form-field">
+              <label for="paPincode">PIN Code</label>
+              <input type="text" id="paPincode" required pattern="\d{6}" maxlength="6">
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button type="submit" class="btn btn-primary btn-sm">Save Address</button>
+              <button type="button" class="btn btn-outline btn-sm" id="cancelAddAddressProfile">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="orders">
+        <div id="ordersList"></div>
+        <div class="empty-state" id="noOrdersState" style="display:none;">
+          <h3>No orders yet</h3>
+          <p>Once you place an order, you'll be able to track it here.</p>
+          <a href="catalog.html" class="btn btn-primary" style="margin-top:1em;">Browse the Catalog</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="container footer-grid">
+    <div>
+      <span class="brand-name" style="color:var(--zari-gold-light); font-size:1.4rem;">Vijaya Fabrics</span>
+      <p style="margin-top:.8em; max-width:36ch;">Silk, cotton, handloom and pattu sarees, plus Punjabi dress materials — woven traditions from Chirala to your wardrobe.</p>
+    </div>
+    <div>
+      <h4>Shop</h4>
+      <a href="catalog.html">Full Catalog</a>
+      <a href="catalog.html?cat=handloom">Handloom Sarees</a>
+      <a href="catalog.html?cat=pattu">Pattu Sarees</a>
+      <a href="catalog.html?cat=punjabi">Dress Materials</a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <a href="index.html#contact">Main Bazaar Road, Chirala, AP</a>
+      <a href="tel:+919999999999">+91 99999 99999</a>
+      <a href="https://wa.me/919999999999" target="_blank" rel="noopener">WhatsApp Us</a>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© <span id="year"></span> Vijaya Fabrics, Chirala. All rights reserved.</span>
+    <span>Built as a Full Stack Web Development internship project.</span>
+  </div>
+</footer>
+
+<a class="whatsapp-float" href="https://wa.me/919999999999" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">💬</a>
+
+<div class="modal-backdrop" id="authModalBackdrop">
+  <div class="modal auth-modal">
+    <div class="modal-body" style="padding:32px 30px;">
+      <button class="modal-close auth-close" aria-label="Close">×</button>
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-mode="login">Login</div>
+        <div class="auth-tab" data-mode="signup">Sign Up</div>
+      </div>
+      <div class="auth-error" id="authError"></div>
+
+      <form class="auth-panel" data-mode="login" id="loginForm">
+        <div class="form-field">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required>
+        </div>
+        <div class="form-field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Log In</button>
+        <p class="auth-switch">New here? <a href="#" onclick="setAuthTab('signup'); return false;">Create an account</a></p>
+      </form>
+
+      <form class="auth-panel" data-mode="signup" id="signupForm" style="display:none;">
+        <div class="form-field">
+          <label for="signupName">Full name</label>
+          <input type="text" id="signupName" required>
+        </div>
+        <div class="form-field">
+          <label for="signupEmail">Email</label>
+          <input type="email" id="signupEmail" required>
+        </div>
+        <div class="form-field">
+          <label for="signupPhone">Phone</label>
+          <input type="tel" id="signupPhone" required minlength="10">
+        </div>
+        <div class="form-field">
+          <label for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Create Account</button>
+        <p class="auth-switch">Already have an account? <a href="#" onclick="setAuthTab('login'); return false;">Log in</a></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/profile.js"></script>
+</body>
+</html>
