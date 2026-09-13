@@ -69,7 +69,7 @@ vijaya-fabrics/
 - **Checkout & orders**: checkout collects a shipping address (from saved addresses or a new one, which also gets saved to the account) and places an order from the current cart (Cash on Delivery only for now — see "What's next" in `PITCH.md`). Orders carry a status (`Received → Processing → Packed → Shipped → Out for Delivery → Delivered`, or `Cancelled`) and a status history, shown to the customer as a tracker on their Profile → Order History tab.
 - **Photo uploads**: handled by `multer`, saved into `backend/uploads/`, and served back at `/uploads/<filename>`. If no photo is uploaded, the server generates a branded placeholder swatch automatically.
 
-## Running it locally
+## Running it locally.
 
 You'll need a MongoDB instance — either a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster (recommended, no local install) or a local `mongod`.
 
