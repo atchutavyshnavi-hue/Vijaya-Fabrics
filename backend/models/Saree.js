@@ -18,7 +18,8 @@ const sareeSchema = new mongoose.Schema(
     bulkPrice: { type: Number, min: 0, default: null }, // per-piece price for bulk/reseller orders
     fabric: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
-    image: { type: String, required: true },
+    image: { type: String, required: true }, // cover photo, shown on catalog cards
+    images: { type: [String], default: [] }, // full gallery for the product page — falls back to [image] when empty
     featured: { type: Boolean, default: false },
     colours: { type: [String], default: [] },
     stock: { type: Number, required: true, min: 0, default: 0 }, // individual pieces in stock

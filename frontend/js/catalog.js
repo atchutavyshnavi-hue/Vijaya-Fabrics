@@ -330,6 +330,7 @@ function openModal(id) {
   if (!p) return;
   const cat = getCategoryFrom(state.categories, p.category);
   const outOfStock = p.inStock === false;
+  const gallery = [p.image, ...(p.images || [])].filter(Boolean);
   const coloursHtml = (p.colours || []).length
     ? `<div class="spec-row"><span>Available Colours</span><strong>${p.colours.join(", ")}</strong></div>`
     : "";
@@ -339,8 +340,17 @@ function openModal(id) {
       ? `<div class="spec-row"><span>Availability</span><strong style="color:var(--ink-maroon);">${p.lowStockCount} left in stock</strong></div>`
       : `<div class="spec-row"><span>Availability</span><strong>In stock</strong></div>`;
 
+  const galleryHtml = `
+    <div class="modal-gallery">
+      <img class="gallery-main" id="modalMainImage" src="${gallery[0]}" alt="${p.name}" loading="lazy">
+      ${gallery.length > 1 ? `
+        <div class="gallery-thumbs">
+          ${gallery.map((src, i) => `<img src="${src}" data-gallery-thumb="${i}" class="${i === 0 ? "active" : ""}" alt="${p.name} photo ${i + 1}" loading="lazy">`).join("")}
+        </div>` : ""}
+    </div>`;
+
   document.getElementById("modalContent").innerHTML = `
-    <img src="${p.image}" alt="${p.name}">
+    ${galleryHtml}
     <div class="modal-body">
       <button class="modal-close" aria-label="Close">×</button>
       <span class="sub">${cat ? cat.label : p.category} · ${p.subtype}</span>
@@ -352,6 +362,8 @@ function openModal(id) {
       <div class="spec-row"><span>Weave / Origin</span><strong>${p.subtype}</strong></div>
       ${coloursHtml}
       ${stockHtml}
+      <div class="spec-row"><span>Delivery Estimate</span><strong>3–7 business days</strong></div>
+      <div class="spec-row"><span>Cancellation</span><strong>Free before shipping</strong></div>
       <div style="margin-top:1.6em; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
         <button class="btn btn-gold" id="modalAddCart" ${outOfStock ? "disabled" : ""}>${outOfStock ? "Out of Stock" : "Add to Cart"}</button>
         <button type="button" class="btn btn-outline" id="modalWishBtn">${state.wishlistIds.has(p.id) ? "♥ Saved" : "♡ Save to Wishlist"}</button>
@@ -365,6 +377,8 @@ function openModal(id) {
       <div id="modalReviews" style="margin-top:2em; padding-top:1.4em; border-top:1px solid var(--line);">
         <p style="font-size:.85rem; color:var(--charcoal-soft);">Loading reviews…</p>
       </div>
+
+      <div id="modalRelated" style="margin-top:2em; padding-top:1.4em; border-top:1px solid var(--line);"></div>
     </div>`;
   document.getElementById("modalBackdrop").classList.add("open");
   document.querySelectorAll(".modal-close, #modalCloseBtn").forEach(b =>
@@ -378,8 +392,146 @@ function openModal(id) {
     const btn = document.getElementById("modalWishBtn");
     if (btn) btn.textContent = state.wishlistIds.has(p.id) ? "♥ Saved" : "♡ Save to Wishlist";
   });
+
+  wireGallery(gallery);
+  renderRelatedProducts(p);
   history.replaceState(null, "", `catalog.html?product=${id}`);
   loadModalReviews(p.id);
+  recordRecentlyViewed(p.id);
+}
+
+/* ---------- Gallery + lightbox ---------- */
+let lightboxState = { images: [], index: 0 };
+
+function wireGallery(gallery) {
+  const mainImg = document.getElementById("modalMainImage");
+  const thumbs = document.querySelectorAll("#modalContent .gallery-thumbs img[data-gallery-thumb]");
+  if (mainImg) mainImg.dataset.currentIndex = "0";
+
+  thumbs.forEach((thumb) => {
+    thumb.addEventListener("click", () => {
+      const i = Number(thumb.dataset.galleryThumb);
+      mainImg.src = gallery[i];
+      mainImg.dataset.currentIndex = String(i);
+      thumbs.forEach((t) => t.classList.remove("active"));
+      thumb.classList.add("active");
+    });
+  });
+
+  if (mainImg) {
+    mainImg.addEventListener("click", () => {
+      openLightbox(gallery, Number(mainImg.dataset.currentIndex) || 0);
+    });
+  }
+}
+
+function openLightbox(images, index) {
+  lightboxState = { images, index };
+  document.getElementById("lightboxImage").src = images[index];
+  const overlay = document.getElementById("lightboxOverlay");
+  overlay.classList.add("open");
+  const nav = images.length > 1;
+  document.getElementById("lightboxPrev").style.display = nav ? "flex" : "none";
+  document.getElementById("lightboxNext").style.display = nav ? "flex" : "none";
+}
+
+function closeLightbox() {
+  document.getElementById("lightboxOverlay").classList.remove("open");
+}
+
+function stepLightbox(delta) {
+  const { images } = lightboxState;
+  if (!images.length) return;
+  lightboxState.index = (lightboxState.index + delta + images.length) % images.length;
+  document.getElementById("lightboxImage").src = images[lightboxState.index];
+}
+
+document.getElementById("lightboxClose").addEventListener("click", closeLightbox);
+document.getElementById("lightboxPrev").addEventListener("click", () => stepLightbox(-1));
+document.getElementById("lightboxNext").addEventListener("click", () => stepLightbox(1));
+document.getElementById("lightboxOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "lightboxOverlay") closeLightbox();
+});
+document.addEventListener("keydown", (e) => {
+  const overlay = document.getElementById("lightboxOverlay");
+  if (!overlay.classList.contains("open")) return;
+  if (e.key === "Escape") closeLightbox();
+  if (e.key === "ArrowLeft") stepLightbox(-1);
+  if (e.key === "ArrowRight") stepLightbox(1);
+});
+
+/* ---------- Related products ---------- */
+function relatedMiniCardHtml(p) {
+  return `
+    <button type="button" class="mini-card" data-related-id="${p.id}">
+      <img src="${p.image}" alt="${p.name}" loading="lazy">
+      <span class="mini-name">${p.name}</span>
+      <span class="mini-price">${formatINR(p.price)}</span>
+    </button>`;
+}
+
+function renderRelatedProducts(p) {
+  const wrap = document.getElementById("modalRelated");
+  if (!wrap) return;
+  const related = state.allSarees
+    .filter((s) => s.id !== p.id && s.category === p.category)
+    .slice(0, 4);
+  if (!related.length) { wrap.innerHTML = ""; return; }
+  wrap.innerHTML = `
+    <h3 class="related-heading">You may also like</h3>
+    <div class="related-strip">${related.map(relatedMiniCardHtml).join("")}</div>`;
+  wrap.querySelectorAll("[data-related-id]").forEach((btn) => {
+    btn.addEventListener("click", () => openModal(btn.dataset.relatedId));
+  });
+}
+
+/* ---------- Recently viewed (per-browser convenience, stored in localStorage) ---------- */
+const RECENTLY_VIEWED_KEY = "vf_recently_viewed";
+const RECENTLY_VIEWED_MAX = 10;
+
+function getRecentlyViewedIds() {
+  try {
+    const raw = localStorage.getItem(RECENTLY_VIEWED_KEY);
+    const ids = raw ? JSON.parse(raw) : [];
+    return Array.isArray(ids) ? ids : [];
+  } catch (_err) {
+    return [];
+  }
+}
+
+function recordRecentlyViewed(id) {
+  try {
+    let ids = getRecentlyViewedIds().filter((existingId) => existingId !== id);
+    ids.unshift(id);
+    ids = ids.slice(0, RECENTLY_VIEWED_MAX);
+    localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(ids));
+  } catch (_err) {
+    // localStorage unavailable (private browsing, etc.) — skip silently
+  }
+  renderRecentlyViewedStrip();
+}
+
+function renderRecentlyViewedStrip() {
+  const section = document.getElementById("recentlyViewedSection");
+  const strip = document.getElementById("recentlyViewedStrip");
+  if (!section || !strip || !state.allSarees) return;
+
+  const ids = getRecentlyViewedIds();
+  const products = ids
+    .map((id) => state.allSarees.find((s) => s.id === id))
+    .filter(Boolean)
+    .slice(0, RECENTLY_VIEWED_MAX);
+
+  if (!products.length) {
+    section.style.display = "none";
+    return;
+  }
+
+  section.style.display = "block";
+  strip.innerHTML = products.map(relatedMiniCardHtml).join("");
+  strip.querySelectorAll("[data-related-id]").forEach((btn) => {
+    btn.addEventListener("click", () => openModal(btn.dataset.relatedId));
+  });
 }
 
 /* ---------- Reviews (verified-purchaser only, enforced server-side) ---------- */
@@ -496,6 +648,7 @@ async function init() {
     renderBreadcrumbs();
     populateFilterOptions();
     renderGrid();
+    renderRecentlyViewedStrip();
 
     const productParam = new URLSearchParams(location.search).get("product");
     if (productParam) openModal(productParam);

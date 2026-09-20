@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 4 * 1024 * 1024 }, // 4MB
+  limits: { fileSize: 4 * 1024 * 1024 }, // 4MB per file
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
       return cb(new Error("Only image files are allowed."));
@@ -30,6 +30,12 @@ const upload = multer({
     cb(null, true);
   }
 });
+// "image" = the single cover photo shown on catalog cards; "images" = up to 5
+// extra shots for the product page's gallery. Both are optional on PUT.
+const uploadPhotos = upload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "images", maxCount: 5 }
+]);
 
 function validateBody(body, { partial = false } = {}) {
   const errors = [];
@@ -130,8 +136,8 @@ router.get("/:id", optionalAdmin, async (req, res, next) => {
 
 /* ---------- Admin-only routes ---------- */
 
-// POST /api/sarees  (multipart/form-data, field "image" optional)
-router.post("/", requireAdmin, upload.single("image"), async (req, res, next) => {
+// POST /api/sarees  (multipart/form-data, fields "image" and "images[]" optional)
+router.post("/", requireAdmin, uploadPhotos, async (req, res, next) => {
   try {
     const errors = validateBody(req.body);
     if (errors.length) return res.status(400).json({ error: errors.join(" ") });
@@ -140,13 +146,16 @@ router.post("/", requireAdmin, upload.single("image"), async (req, res, next) =>
     const featured = req.body.featured === "true" || req.body.featured === true;
     const active = req.body.active === undefined ? true : (req.body.active === "true" || req.body.active === true);
 
+    const coverFile = req.files?.image?.[0];
     let image;
-    if (req.file) {
-      image = `/uploads/${req.file.filename}`;
+    if (coverFile) {
+      image = `/uploads/${coverFile.filename}`;
     } else {
       const cat = getCategory(category);
       image = generateSwatch(name, cat.color, Date.now() % 1000);
     }
+    const galleryFiles = req.files?.images || [];
+    const images = galleryFiles.map((f) => `/uploads/${f.filename}`);
 
     const bales = parseBales(req.body);
 
@@ -159,6 +168,7 @@ router.post("/", requireAdmin, upload.single("image"), async (req, res, next) =>
       fabric: fabric.trim(),
       description: description.trim(),
       image,
+      images,
       featured,
       active,
       colours: parseColours(req.body.colours),
@@ -170,8 +180,8 @@ router.post("/", requireAdmin, upload.single("image"), async (req, res, next) =>
   } catch (err) { next(err); }
 });
 
-// PUT /api/sarees/:id  (multipart/form-data, field "image" optional)
-router.put("/:id", requireAdmin, upload.single("image"), async (req, res, next) => {
+// PUT /api/sarees/:id  (multipart/form-data, fields "image", "images[]", "removeImages" all optional)
+router.put("/:id", requireAdmin, uploadPhotos, async (req, res, next) => {
   try {
     const existing = await db.getSareeById(req.params.id);
     if (!existing) return res.status(404).json({ error: "Saree not found." });
@@ -191,7 +201,23 @@ router.put("/:id", requireAdmin, upload.single("image"), async (req, res, next) 
     if (req.body.colours !== undefined) updates.colours = parseColours(req.body.colours);
     const bales = parseBales(req.body);
     if (bales) updates.bales = bales;
-    if (req.file) updates.image = `/uploads/${req.file.filename}`;
+
+    const coverFile = req.files?.image?.[0];
+    if (coverFile) updates.image = `/uploads/${coverFile.filename}`;
+
+    // Gallery: start from whatever's already saved, drop anything the admin
+    // asked to remove (removeImages, a JSON array of URLs), then append any
+    // newly uploaded shots.
+    let gallery = existing.images || [];
+    if (req.body.removeImages) {
+      try {
+        const toRemove = JSON.parse(req.body.removeImages);
+        if (Array.isArray(toRemove)) gallery = gallery.filter((url) => !toRemove.includes(url));
+      } catch (_err) { /* malformed input — ignore, keep gallery as-is */ }
+    }
+    const galleryFiles = req.files?.images || [];
+    if (galleryFiles.length) gallery = [...gallery, ...galleryFiles.map((f) => `/uploads/${f.filename}`)];
+    if (req.body.removeImages || galleryFiles.length) updates.images = gallery;
 
     const updated = await db.updateSaree(req.params.id, updates);
     res.json(shapeForResponse(updated, true));

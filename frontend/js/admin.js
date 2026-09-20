@@ -3,6 +3,9 @@ const adminPanel = document.getElementById("adminPanel");
 
 let categories = [];
 let pendingImageFile = null;
+let pendingGalleryFiles = [];
+let existingGalleryImages = []; // gallery URLs already saved for the saree being edited
+let removedGalleryImages = [];  // subset of existingGalleryImages the admin asked to remove
 
 function showPanel() {
   loginShell.style.display = "none";
@@ -82,6 +85,7 @@ async function initAdminPanel() {
     populateSubtypeSelect(e.target.value);
   });
   document.getElementById("fImage").addEventListener("change", handleImageSelect);
+  document.getElementById("fGalleryImages").addEventListener("change", handleGalleryImageSelect);
   document.getElementById("sareeForm").addEventListener("submit", handleFormSubmit);
   document.getElementById("cancelEdit").addEventListener("click", resetForm);
   document.getElementById("resetBtn").addEventListener("click", handleReset);
@@ -113,6 +117,47 @@ function handleImageSelect(e) {
   reader.readAsDataURL(file);
 }
 
+function handleGalleryImageSelect(e) {
+  pendingGalleryFiles = Array.from(e.target.files || []);
+  renderGalleryPreview();
+}
+
+function renderGalleryPreview() {
+  const wrap = document.getElementById("fGalleryPreview");
+  const thumbs = [];
+
+  existingGalleryImages
+    .filter((url) => !removedGalleryImages.includes(url))
+    .forEach((url) => {
+      thumbs.push(`
+        <div style="position:relative;">
+          <img src="${url}" style="width:64px; height:80px; object-fit:cover; border-radius:4px;">
+          <button type="button" data-remove-existing-gallery="${url}" title="Remove"
+            style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; border:none; background:var(--ink-maroon); color:var(--white); font-size:.7rem; cursor:pointer;">✕</button>
+        </div>`);
+    });
+
+  pendingGalleryFiles.forEach((file, i) => {
+    thumbs.push(`<img data-pending-gallery-index="${i}" style="width:64px; height:80px; object-fit:cover; border-radius:4px; opacity:.85;">`);
+  });
+
+  wrap.innerHTML = thumbs.join("");
+
+  wrap.querySelectorAll("[data-remove-existing-gallery]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      removedGalleryImages.push(btn.dataset.removeExistingGallery);
+      renderGalleryPreview();
+    });
+  });
+
+  wrap.querySelectorAll("[data-pending-gallery-index]").forEach((img) => {
+    const file = pendingGalleryFiles[Number(img.dataset.pendingGalleryIndex)];
+    const reader = new FileReader();
+    reader.onload = (ev) => { img.src = ev.target.result; };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function handleFormSubmit(e) {
   e.preventDefault();
   const saveBtn = document.getElementById("saveBtn");
@@ -134,6 +179,8 @@ async function handleFormSubmit(e) {
   formData.append("piecesPerBale", document.getElementById("fPiecesPerBale").value || "0");
   formData.append("costPerBale", document.getElementById("fCostPerBale").value || "0");
   if (pendingImageFile) formData.append("image", pendingImageFile);
+  pendingGalleryFiles.forEach((file) => formData.append("images", file));
+  if (removedGalleryImages.length) formData.append("removeImages", JSON.stringify(removedGalleryImages));
 
   saveBtn.disabled = true;
   saveBtn.textContent = "Saving…";
@@ -163,6 +210,11 @@ function resetForm() {
   document.getElementById("cancelEdit").style.display = "none";
   document.getElementById("fImagePreview").style.display = "none";
   pendingImageFile = null;
+  pendingGalleryFiles = [];
+  existingGalleryImages = [];
+  removedGalleryImages = [];
+  document.getElementById("fGalleryImages").value = "";
+  document.getElementById("fGalleryPreview").innerHTML = "";
   populateSubtypeSelect(document.getElementById("fCategory").value);
 }
 
@@ -245,6 +297,11 @@ function loadForEdit(id, list) {
   preview.src = p.image;
   preview.style.display = "block";
   pendingImageFile = null;
+  pendingGalleryFiles = [];
+  existingGalleryImages = p.images || [];
+  removedGalleryImages = [];
+  document.getElementById("fGalleryImages").value = "";
+  renderGalleryPreview();
   document.getElementById("formTitle").textContent = "Edit saree";
   document.getElementById("cancelEdit").style.display = "inline-flex";
   window.scrollTo({ top: document.getElementById("sareeForm").offsetTop - 100, behavior: "smooth" });

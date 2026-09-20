@@ -24,6 +24,7 @@
       <a href="index.html#about">About</a>
       <a href="index.html#contact">Contact</a>
       <!-- <a href="admin.html" data-page="admin.html">Admin</a> -->
+      <a href="wishlist.html" class="nav-wishlist" data-page="wishlist.html">♡ Wishlist<span class="cart-badge" id="wishlistBadge" style="display:none;">0</span></a>
       <a href="cart.html" class="nav-cart" data-page="cart.html">🛍 Cart<span class="cart-badge" id="cartBadge" style="display:none;">0</span></a>
       <a href="#" class="nav-account" id="navAccountLink">Login</a>
     </nav>
@@ -94,6 +95,13 @@
   </div>
 </section>
 
+<section id="recentlyViewedSection" style="padding-top:0; display:none;">
+  <div class="container">
+    <h3 class="related-heading">Recently Viewed</h3>
+    <div class="related-strip" id="recentlyViewedStrip"></div>
+  </div>
+</section>
+
 <footer class="site">
   <div class="container footer-grid">
     <div>
@@ -124,6 +132,13 @@
 
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal" id="modalContent"></div>
+</div>
+
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close full-screen image">×</button>
+  <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous image">‹</button>
+  <img id="lightboxImage" src="" alt="">
+  <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next image">›</button>
 </div>
 
 <div class="modal-backdrop" id="authModalBackdrop">
