@@ -49,6 +49,7 @@ async function updateAccountNav() {
     link.onclick = (e) => { e.preventDefault(); openAuthModal("login"); };
   }
   await updateCartBadge();
+  await updateWishlistBadge();
 }
 
 async function updateCartBadge() {
@@ -59,6 +60,23 @@ async function updateCartBadge() {
     const cart = await api.cart.get();
     if (cart.itemCount > 0) {
       badge.textContent = cart.itemCount;
+      badge.style.display = "inline-block";
+    } else {
+      badge.style.display = "none";
+    }
+  } catch (err) {
+    badge.style.display = "none";
+  }
+}
+
+async function updateWishlistBadge() {
+  const badge = document.getElementById("wishlistBadge");
+  if (!badge) return;
+  if (!api.customer.isLoggedIn()) { badge.style.display = "none"; return; }
+  try {
+    const wishlist = await api.wishlist.get();
+    if (wishlist.count > 0) {
+      badge.textContent = wishlist.count;
       badge.style.display = "inline-block";
     } else {
       badge.style.display = "none";

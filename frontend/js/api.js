@@ -364,6 +364,28 @@ const api = {
     }
   },
 
+  /* ---------- Wishlist ---------- */
+  wishlist: {
+    async get() {
+      return api.customer.request(`${api.base}/wishlist`);
+    },
+    async add(sareeId) {
+      return api.customer.request(`${api.base}/wishlist`, {
+        method: "POST",
+        body: JSON.stringify({ sareeId })
+      });
+    },
+    async remove(sareeId) {
+      return api.customer.request(`${api.base}/wishlist/${sareeId}`, { method: "DELETE" });
+    },
+    async moveToCart(sareeId, qty = 1) {
+      return api.customer.request(`${api.base}/wishlist/${sareeId}/move-to-cart`, {
+        method: "POST",
+        body: JSON.stringify({ qty })
+      });
+    }
+  },
+
   /* ---------- Orders ---------- */
   orders: {
     async place({ shippingAddress, paymentMethod }) {

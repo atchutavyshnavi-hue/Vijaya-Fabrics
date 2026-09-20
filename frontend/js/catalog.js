@@ -9,7 +9,8 @@ const state = {
   priceMax: null,
   colours: [],
   materials: [],
-  inStockOnly: false
+  inStockOnly: false,
+  wishlistIds: new Set()
 };
 
 function initFromUrl() {
@@ -209,6 +210,55 @@ function renderGrid() {
       quickAddToCart(btn.dataset.quickAdd);
     });
   });
+  grid.querySelectorAll("[data-wish-toggle]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleWishlist(btn.dataset.wishToggle, btn);
+    });
+  });
+}
+
+/* ---------- Wishlist ---------- */
+async function loadWishlistIds() {
+  if (!api.customer.isLoggedIn()) { state.wishlistIds = new Set(); return; }
+  try {
+    const data = await api.wishlist.get();
+    state.wishlistIds = new Set(data.items.map(p => p.id));
+  } catch (err) {
+    state.wishlistIds = new Set();
+  }
+}
+
+function wishHeartHtml(sareeId) {
+  const active = state.wishlistIds.has(sareeId);
+  return `<button type="button" class="wish-heart ${active ? "active" : ""}" data-wish-toggle="${sareeId}" aria-label="${active ? "Remove from wishlist" : "Add to wishlist"}" title="${active ? "Remove from wishlist" : "Add to wishlist"}">${active ? "♥" : "♡"}</button>`;
+}
+
+async function toggleWishlist(sareeId, btnEl) {
+  requireLogin(async () => {
+    const inWishlist = state.wishlistIds.has(sareeId);
+    try {
+      if (inWishlist) {
+        await api.wishlist.remove(sareeId);
+        state.wishlistIds.delete(sareeId);
+        vfToast("Removed from wishlist");
+      } else {
+        await api.wishlist.add(sareeId);
+        state.wishlistIds.add(sareeId);
+        vfToast("Added to wishlist");
+      }
+      await updateWishlistBadge();
+      document.querySelectorAll(`[data-wish-toggle="${sareeId}"]`).forEach(el => {
+        const nowActive = state.wishlistIds.has(sareeId);
+        el.classList.toggle("active", nowActive);
+        el.textContent = nowActive ? "♥" : "♡";
+        el.title = nowActive ? "Remove from wishlist" : "Add to wishlist";
+        el.setAttribute("aria-label", el.title);
+      });
+    } catch (err) {
+      vfToast(err.message || "Could not update your wishlist.", true);
+    }
+  });
 }
 
 document.getElementById("searchInput").addEventListener("input", (e) => {
@@ -249,6 +299,7 @@ function cardHtml(p) {
     <div class="product-card" data-id="${p.id}">
       <div class="thumb" style="position:relative;">
         <img src="${p.image}" alt="${p.name}" loading="lazy">
+        ${wishHeartHtml(p.id)}
         ${outOfStock
           ? `<span class="badge" style="position:absolute; bottom:10px; right:10px;">Out of stock</span>`
           : `<button class="btn btn-sm btn-gold" data-quick-add="${p.id}" style="position:absolute; bottom:10px; right:10px;">+ Cart</button>`}
@@ -301,8 +352,9 @@ function openModal(id) {
       <div class="spec-row"><span>Weave / Origin</span><strong>${p.subtype}</strong></div>
       ${coloursHtml}
       ${stockHtml}
-      <div style="margin-top:1.6em; display:flex; gap:10px; flex-wrap:wrap;">
+      <div style="margin-top:1.6em; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
         <button class="btn btn-gold" id="modalAddCart" ${outOfStock ? "disabled" : ""}>${outOfStock ? "Out of Stock" : "Add to Cart"}</button>
+        <button type="button" class="btn btn-outline" id="modalWishBtn">${state.wishlistIds.has(p.id) ? "♥ Saved" : "♡ Save to Wishlist"}</button>
         <a class="btn btn-primary" target="_blank" rel="noopener"
            href="https://wa.me/919999999999?text=${encodeURIComponent("Hello, I'd like to know more about: " + p.name)}">
            Enquire on WhatsApp
@@ -321,6 +373,11 @@ function openModal(id) {
   if (!outOfStock) {
     document.getElementById("modalAddCart").addEventListener("click", () => quickAddToCart(p.id));
   }
+  document.getElementById("modalWishBtn").addEventListener("click", async () => {
+    await toggleWishlist(p.id);
+    const btn = document.getElementById("modalWishBtn");
+    if (btn) btn.textContent = state.wishlistIds.has(p.id) ? "♥ Saved" : "♡ Save to Wishlist";
+  });
   history.replaceState(null, "", `catalog.html?product=${id}`);
   loadModalReviews(p.id);
 }
@@ -421,9 +478,15 @@ document.addEventListener("keydown", (e) => {
 async function init() {
   initFromUrl();
   try {
+    // Explicitly resolved here (not just left to auth.js's own DOMContentLoaded
+    // listener) so wishlist hearts render correctly filled-in on first paint
+    // for an already-logged-in customer, instead of only updating on click.
+    await api.customer.silentRefresh();
+
     const [cats, sarees] = await Promise.all([getCategoriesCached(), api.getSarees()]);
     state.categories = cats;
     state.allSarees = sarees;
+    await loadWishlistIds();
     document.getElementById("loadingState").style.display = "none";
 
     if (state.search) document.getElementById("searchInput").value = state.search;

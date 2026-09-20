@@ -13,6 +13,7 @@ const customerAuthRoutes = require("./routes/customerAuth");
 const sareesRoutes = require("./routes/sarees");
 const categoriesRoutes = require("./routes/categories");
 const cartRoutes = require("./routes/cart");
+const wishlistRoutes = require("./routes/wishlist");
 const ordersRoutes = require("./routes/orders");
 const adminOrdersRoutes = require("./routes/adminOrders");
 const complaintsRoutes = require("./routes/complaints");
@@ -38,6 +39,7 @@ app.use("/api/auth/customer", customerAuthRoutes); // customer signup/login/refr
 app.use("/api/sarees", sareesRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/admin/orders", adminOrdersRoutes); // admin-only OMS — separate path, own requireAdmin gate
 app.use("/api/complaints", complaintsRoutes); // customer submit + view own complaints

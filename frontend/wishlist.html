@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Account — Vijaya Fabrics</title>
-<meta name="description" content="Manage your Vijaya Fabrics account — personal info, saved addresses and order history.">
+<title>Your Wishlist — Vijaya Fabrics</title>
+<meta name="description" content="Sarees you've saved to your wishlist at Vijaya Fabrics, Chirala.">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -34,152 +34,28 @@
 
 <section style="padding-bottom:0;">
   <div class="container">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="index.html">Home</a> <span class="crumb-sep">/</span> <span class="crumb-current">Wishlist</span>
+    </nav>
     <div class="section-head">
-      <span class="eyebrow">Your Account</span>
-      <h1 style="font-size:clamp(2rem,4vw,2.8rem);">My Account</h1>
-      <p class="account-nav" id="whoLine"></p>
+      <span class="eyebrow">Saved For Later</span>
+      <h1 style="font-size:clamp(2rem,4vw,2.8rem);">Your Wishlist</h1>
+      <p>Everything you've saved, in one place — move it to your cart whenever you're ready.</p>
     </div>
   </div>
 </section>
 
 <section style="padding-top:0;">
   <div class="container">
-    <div class="loading-state" id="loadingState">Loading your account…</div>
+    <div class="loading-state" id="loadingState">Loading your wishlist…</div>
 
-    <div class="empty-state" id="loggedOutState" style="display:none;">
-      <h3>Log in to view your account</h3>
-      <p>Personal info, saved addresses and order history live here once you're logged in.</p>
-      <button class="btn btn-primary" id="profileLoginBtn" style="margin-top:1em;">Login / Sign Up</button>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <h3>Your wishlist is empty</h3>
+      <p>Tap the ♡ on any saree in the catalog to save it here for later.</p>
+      <a href="catalog.html" class="btn btn-primary" style="margin-top:1em;">Explore Products</a>
     </div>
 
-    <div id="profileContent" style="display:none;">
-      <div class="tabbar" id="tabbar">
-        <button data-tab="info" class="active">Personal Info</button>
-        <button data-tab="addresses">Saved Addresses</button>
-        <button data-tab="orders">Order History</button>
-        <button data-tab="complaints">Complaints &amp; Feedback</button>
-      </div>
-
-      <div class="tab-panel active" data-tab-panel="info">
-        <div class="admin-grid">
-          <div class="admin-card">
-            <h3 style="margin-top:0;">Personal Information</h3>
-            <form id="infoForm">
-              <div class="form-field">
-                <label for="infoName">Full Name</label>
-                <input type="text" id="infoName" required>
-              </div>
-              <div class="form-field">
-                <label for="infoEmail">Email</label>
-                <input type="email" id="infoEmail" disabled>
-              </div>
-              <div class="form-field">
-                <label for="infoPhone">Phone</label>
-                <input type="tel" id="infoPhone" required minlength="10">
-              </div>
-              <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
-            </form>
-          </div>
-
-          <div class="admin-card">
-            <h3 style="margin-top:0;">Change Password</h3>
-            <form id="passwordForm">
-              <div class="form-field">
-                <label for="curPassword">Current Password</label>
-                <input type="password" id="curPassword" required>
-              </div>
-              <div class="form-field">
-                <label for="newPassword">New Password</label>
-                <input type="password" id="newPassword" required minlength="6">
-              </div>
-              <p class="auth-error" id="passwordError" style="display:none;"></p>
-              <button type="submit" class="btn btn-outline btn-sm">Update Password</button>
-            </form>
-            <div style="margin-top:2em; padding-top:1.4em; border-top:1px solid var(--line);">
-              <h3 style="margin-top:0;">Change Account</h3>
-              <p style="font-size:.85rem;">Log out of this account to sign in as someone else.</p>
-              <button class="btn btn-outline btn-sm" id="logoutBtnProfile">Log Out</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-panel" data-tab-panel="addresses">
-        <div class="admin-card">
-          <h3 style="margin-top:0;">Saved Addresses</h3>
-          <div id="addressListProfile"></div>
-          <button type="button" class="btn btn-outline btn-sm" id="showAddAddressBtnProfile" style="margin-top:.6em;">+ Add a new address</button>
-          <form id="addAddressFormProfile" style="display:none; margin-top:1.2em; max-width:420px;">
-            <div class="form-field">
-              <label for="paLabel">Label</label>
-              <input type="text" id="paLabel" placeholder="e.g. Home, Office" value="Home">
-            </div>
-            <div class="form-field">
-              <label for="paLine1">Address Line 1</label>
-              <input type="text" id="paLine1" required>
-            </div>
-            <div class="form-field">
-              <label for="paLine2">Address Line 2 (optional)</label>
-              <input type="text" id="paLine2">
-            </div>
-            <div class="form-field">
-              <label for="paCity">City</label>
-              <input type="text" id="paCity" required>
-            </div>
-            <div class="form-field">
-              <label for="paState">State</label>
-              <input type="text" id="paState" required value="Andhra Pradesh">
-            </div>
-            <div class="form-field">
-              <label for="paPincode">PIN Code</label>
-              <input type="text" id="paPincode" required pattern="\d{6}" maxlength="6">
-            </div>
-            <div style="display:flex; gap:10px;">
-              <button type="submit" class="btn btn-primary btn-sm">Save Address</button>
-              <button type="button" class="btn btn-outline btn-sm" id="cancelAddAddressProfile">Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <div class="tab-panel" data-tab-panel="orders">
-        <div id="ordersList"></div>
-        <div class="empty-state" id="noOrdersState" style="display:none;">
-          <h3>No orders yet</h3>
-          <p>Once you place an order, you'll be able to track it here.</p>
-          <a href="catalog.html" class="btn btn-primary" style="margin-top:1em;">Browse the Catalog</a>
-        </div>
-      </div>
-
-      <div class="tab-panel" data-tab-panel="complaints">
-        <div class="admin-card" style="margin-bottom:1.4em;">
-          <h3 style="margin-top:0;">Raise a Complaint / Feedback</h3>
-          <form id="complaintForm">
-            <div class="form-field">
-              <label for="cSubject">Subject</label>
-              <input type="text" id="cSubject" required maxlength="120">
-            </div>
-            <div class="form-field">
-              <label for="cOrder">Related Order (optional)</label>
-              <select id="cOrder">
-                <option value="">— Not related to a specific order —</option>
-              </select>
-            </div>
-            <div class="form-field">
-              <label for="cDescription">Details</label>
-              <textarea id="cDescription" rows="4" required maxlength="2000"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary btn-sm">Submit</button>
-          </form>
-        </div>
-
-        <div id="complaintsList"></div>
-        <div class="empty-state" id="noComplaintsState" style="display:none;">
-          <h3>No complaints yet</h3>
-          <p>Anything you raise with us will be tracked here, right through to resolution.</p>
-        </div>
-      </div>
-    </div>
+    <div class="product-grid" id="wishlistGrid" style="display:none;"></div>
   </div>
 </section>
 
@@ -198,14 +74,14 @@
     </div>
     <div>
       <h4>Contact</h4>
-      <a href="index.html#contact">Mahathma Gandhi Cloth Market, Chirala, AP</a>
+      <a href="index.html#contact">Main Bazaar Road, Chirala, AP</a>
       <a href="tel:+919966145345">+91 99661 45345</a>
       <a href="https://wa.me/919966145345" target="_blank" rel="noopener">WhatsApp Us</a>
     </div>
   </div>
   <div class="container footer-bottom">
     <span>© <span id="year"></span> Vijaya Fabrics, Chirala. All rights reserved.</span>
-    <!-- <span>Built as a Full Stack Web Development internship project.</span> -->
+    <span>Built as a Full Stack Web Development internship project.</span>
   </div>
 </footer>
 
@@ -290,6 +166,6 @@
 <script src="js/common.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/profile.js"></script>
+<script src="js/wishlist.js"></script>
 </body>
 </html>
