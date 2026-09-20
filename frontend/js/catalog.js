@@ -139,6 +139,10 @@ function openModal(id) {
         </a>
         <button class="btn btn-outline" id="modalCloseBtn">Close</button>
       </div>
+
+      <div id="modalReviews" style="margin-top:2em; padding-top:1.4em; border-top:1px solid var(--line);">
+        <p style="font-size:.85rem; color:var(--charcoal-soft);">Loading reviews…</p>
+      </div>
     </div>`;
   document.getElementById("modalBackdrop").classList.add("open");
   document.querySelectorAll(".modal-close, #modalCloseBtn").forEach(b =>
@@ -148,6 +152,88 @@ function openModal(id) {
     document.getElementById("modalAddCart").addEventListener("click", () => quickAddToCart(p.id));
   }
   history.replaceState(null, "", `catalog.html?product=${id}`);
+  loadModalReviews(p.id);
+}
+
+/* ---------- Reviews (verified-purchaser only, enforced server-side) ---------- */
+function reviewCardHtml(r) {
+  const date = new Date(r.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" });
+  const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+  return `
+    <div style="padding:.7em 0; border-bottom:1px solid var(--line);">
+      <div style="display:flex; justify-content:space-between; gap:10px;">
+        <strong style="font-size:.88rem;">${r.customerName}</strong>
+        <span style="color:var(--zari-gold-dark); letter-spacing:1px;">${stars}</span>
+      </div>
+      <div style="font-size:.76rem; color:var(--charcoal-soft); margin:.15em 0 .4em;">${date}</div>
+      ${r.comment ? `<p style="font-size:.86rem; margin:0;">${r.comment}</p>` : ""}
+    </div>`;
+}
+
+async function loadModalReviews(sareeId) {
+  const wrap = document.getElementById("modalReviews");
+  if (!wrap) return; // modal was closed before this resolved
+  try {
+    const { average, count, reviews } = await api.reviews.forSaree(sareeId);
+    const summaryHtml = count
+      ? `<div style="display:flex; align-items:center; gap:8px; margin-bottom:.8em;">
+           <span style="color:var(--zari-gold-dark); font-size:1.1rem;">${"★".repeat(Math.round(average))}${"☆".repeat(5 - Math.round(average))}</span>
+           <strong>${average}</strong> <span style="color:var(--charcoal-soft); font-size:.85rem;">(${count} review${count === 1 ? "" : "s"})</span>
+         </div>`
+      : `<p style="font-size:.85rem; color:var(--charcoal-soft); margin-bottom:.8em;">No reviews yet — be the first to review this after your order is delivered.</p>`;
+
+    const listHtml = reviews.map(reviewCardHtml).join("");
+
+    const canReview = api.customer.isLoggedIn();
+    const formHtml = `
+      <div style="margin-top:1.2em; padding-top:1em; border-top:1px solid var(--line);">
+        <h4 style="margin:0 0 .6em;">Write a Review</h4>
+        <p style="font-size:.78rem; color:var(--charcoal-soft); margin-bottom:.6em;">Only customers who've ordered this saree can review it.</p>
+        <form id="reviewForm">
+          <div class="form-field">
+            <label for="reviewRating">Rating</label>
+            <select id="reviewRating" required>
+              <option value="">Select…</option>
+              <option value="5">★★★★★ — Excellent</option>
+              <option value="4">★★★★☆ — Good</option>
+              <option value="3">★★★☆☆ — Okay</option>
+              <option value="2">★★☆☆☆ — Not great</option>
+              <option value="1">★☆☆☆☆ — Poor</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="reviewComment">Comment (optional)</label>
+            <textarea id="reviewComment" rows="3" maxlength="1000"></textarea>
+          </div>
+          <button type="submit" class="btn btn-outline btn-sm">Submit Review</button>
+        </form>
+      </div>`;
+
+    wrap.innerHTML = `<h3 style="margin:0 0 .6em;">Reviews</h3>${summaryHtml}<div>${listHtml}</div>${canReview ? formHtml : ""}`;
+
+    if (canReview) {
+      document.getElementById("reviewForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector("button[type=submit]");
+        btn.disabled = true;
+        try {
+          await api.reviews.submit({
+            sareeId,
+            rating: Number(document.getElementById("reviewRating").value),
+            comment: document.getElementById("reviewComment").value.trim()
+          });
+          vfToast("Thanks for your review!");
+          loadModalReviews(sareeId);
+        } catch (err) {
+          vfToast(err.message || "Could not submit your review.", true);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+  } catch (err) {
+    wrap.innerHTML = `<p style="font-size:.85rem; color:var(--charcoal-soft);">Could not load reviews right now.</p>`;
+  }
 }
 
 function closeModal() {

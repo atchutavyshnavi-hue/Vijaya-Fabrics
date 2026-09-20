@@ -79,9 +79,11 @@
       </form>
     </div>
 
-    <div class="admin-tabbar" style="display:flex; gap:10px; margin-bottom:1.6em;">
+    <div class="admin-tabbar" style="display:flex; gap:10px; margin-bottom:1.6em; flex-wrap:wrap;">
       <button class="chip active" id="tabCatalogBtn" data-admin-tab="catalog">Catalog</button>
       <button class="chip" id="tabOrdersBtn" data-admin-tab="orders">Orders</button>
+      <button class="chip" id="tabComplaintsBtn" data-admin-tab="complaints">Complaints</button>
+      <button class="chip" id="tabCrmBtn" data-admin-tab="crm">CRM Dashboard</button>
     </div>
 
     <div id="catalogSection">
@@ -203,6 +205,57 @@
         <p id="ordersEmptyState" style="display:none; color:var(--charcoal-soft); margin-top:1em;">No orders match this filter.</p>
       </div>
     </div>
+
+    <div id="complaintsSection" style="display:none;">
+      <div class="admin-card" style="margin-bottom:1.4em;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;" id="complaintStatusFilters"></div>
+      </div>
+      <div class="admin-card">
+        <h3>Complaints &amp; Feedback (<span id="complaintCountLabel">0</span>)</h3>
+        <div style="overflow:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Subject</th><th>Customer</th><th>Order</th><th>Details</th><th>Status</th><th>Note</th><th>Raised</th></tr>
+            </thead>
+            <tbody id="complaintTableBody"></tbody>
+          </table>
+        </div>
+        <p id="complaintsEmptyState" style="display:none; color:var(--charcoal-soft); margin-top:1em;">No complaints match this filter.</p>
+      </div>
+    </div>
+
+    <div id="crmSection" style="display:none;">
+      <div class="admin-grid" style="grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:1.6em;">
+        <div class="admin-card" style="margin:0;"><span class="sub">Total Orders</span><h2 id="crmTotalOrders" style="margin:.15em 0;">—</h2></div>
+        <div class="admin-card" style="margin:0;"><span class="sub">Delivered</span><h2 id="crmDelivered" style="margin:.15em 0;">—</h2></div>
+        <div class="admin-card" style="margin:0;"><span class="sub">Cancelled</span><h2 id="crmCancelled" style="margin:.15em 0;">—</h2></div>
+        <div class="admin-card" style="margin:0;"><span class="sub">Pending</span><h2 id="crmPending" style="margin:.15em 0;">—</h2></div>
+        <div class="admin-card" style="margin:0;"><span class="sub">Total Revenue</span><h2 id="crmRevenue" style="margin:.15em 0;">—</h2></div>
+        <div class="admin-card" style="margin:0;"><span class="sub">Total Complaints</span><h2 id="crmComplaints" style="margin:.15em 0;">—</h2></div>
+      </div>
+
+      <div class="admin-grid" style="grid-template-columns:1.3fr 1fr; gap:14px;">
+        <div class="admin-card">
+          <h3 style="margin-top:0;">Monthly Orders &amp; Revenue (last 6 months)</h3>
+          <div id="crmMonthlyChart"></div>
+        </div>
+        <div class="admin-card">
+          <h3 style="margin-top:0;">Orders by Status</h3>
+          <div id="crmStatusChart"></div>
+        </div>
+      </div>
+
+      <div class="admin-grid" style="grid-template-columns:1fr 1fr; gap:14px; margin-top:14px;">
+        <div class="admin-card">
+          <h3 style="margin-top:0;">Category Performance</h3>
+          <div id="crmCategoryChart"></div>
+        </div>
+        <div class="admin-card">
+          <h3 style="margin-top:0;">Complaints by Status</h3>
+          <div id="crmComplaintChart"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -216,6 +269,7 @@
 <script src="js/common.js"></script>
 <script src="js/api.js"></script>
 <script src="js/admin.js"></script>
-<script src="js/adminOrders.js"></script>
+<script src="js/admin-orders.js"></script>
+<script src="js/admin-crm.js"></script>
 </body>
 </html>

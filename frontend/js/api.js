@@ -146,6 +146,43 @@ const api = {
     }
   },
 
+  /* ---------- Admin: Complaints ---------- */
+  adminComplaints: {
+    async list({ status } = {}) {
+      const params = new URLSearchParams();
+      if (status && status !== "all") params.set("status", status);
+      const qs = params.toString();
+      const res = await fetch(`${api.base}/admin/complaints${qs ? "?" + qs : ""}`, {
+        headers: { Authorization: `Bearer ${api.getToken()}` }
+      });
+      const data = await res.json().catch(() => ([]));
+      if (!res.ok) throw new Error(data.error || "Could not load complaints.");
+      return data;
+    },
+    async updateStatus(id, { status, adminNote } = {}) {
+      const res = await fetch(`${api.base}/admin/complaints/${id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${api.getToken()}` },
+        body: JSON.stringify({ status, adminNote })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not update this complaint.");
+      return data;
+    }
+  },
+
+  /* ---------- Admin: CRM dashboard ---------- */
+  crm: {
+    async summary() {
+      const res = await fetch(`${api.base}/admin/crm/summary`, {
+        headers: { Authorization: `Bearer ${api.getToken()}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not load the CRM dashboard.");
+      return data;
+    }
+  },
+
   /* =====================================================================
      Customer account. Access token lives in memory only (never
      localStorage) — silentRefresh() uses the httpOnly refresh cookie to
@@ -340,6 +377,40 @@ const api = {
     },
     async get(id) {
       return api.customer.request(`${api.base}/orders/${id}`);
+    }
+  },
+
+  /* ---------- Complaints (customer) ---------- */
+  complaints: {
+    async submit({ subject, description, orderId } = {}) {
+      return api.customer.request(`${api.base}/complaints`, {
+        method: "POST",
+        body: JSON.stringify({ subject, description, orderId })
+      });
+    },
+    async list() {
+      return api.customer.request(`${api.base}/complaints`);
+    }
+  },
+
+  /* ---------- Reviews ---------- */
+  reviews: {
+    // Public — no login required to read.
+    async forSaree(sareeId) {
+      const res = await fetch(`${api.base}/reviews/saree/${sareeId}`);
+      const data = await res.json().catch(() => ({ average: 0, count: 0, reviews: [] }));
+      if (!res.ok) throw new Error(data.error || "Could not load reviews.");
+      return data;
+    },
+    // Login-gated; backend also verifies the customer actually bought it.
+    async submit({ sareeId, rating, comment } = {}) {
+      return api.customer.request(`${api.base}/reviews`, {
+        method: "POST",
+        body: JSON.stringify({ sareeId, rating, comment })
+      });
+    },
+    async remove(id) {
+      return api.customer.request(`${api.base}/reviews/${id}`, { method: "DELETE" });
     }
   }
 };

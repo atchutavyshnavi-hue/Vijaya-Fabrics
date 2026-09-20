@@ -366,6 +366,9 @@ footer.site a:hover{color:var(--zari-gold-light);}
 .status-pill.packed, .status-pill.shipped, .status-pill.out-for-delivery{background:#E2EEFB; color:#1F4B7A;}
 .status-pill.delivered{background:#E3F3E5; color:#1F6B34;}
 .status-pill.cancelled{background:#FBE4E4; color:var(--ink-maroon-dark);}
+.status-pill.open{background:#FBE4E4; color:var(--ink-maroon-dark);}
+.status-pill.in-review{background:#FDF0DD; color:#8A5B14;}
+.status-pill.resolved, .status-pill.closed{background:#E3F3E5; color:#1F6B34;}
 
 .tracker{display:flex; margin:1.4em 0 .6em; overflow-x:auto; padding-bottom:4px;}
 .tracker-step{flex:1; min-width:96px; text-align:center; position:relative;}

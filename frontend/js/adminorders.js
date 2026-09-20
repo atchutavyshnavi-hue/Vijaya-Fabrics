@@ -1,33 +1,48 @@
 /* Admin Order Management (OMS) — separate tab inside admin.html. */
-/*===*/
+
 const ORDER_STATUS_LIST = ["Received", "Processing", "Packed", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];
 const PAYMENT_STATUS_LIST = ["Pending", "Paid", "Failed", "Refunded"];
 const TERMINAL_STATUSES = ["Delivered", "Cancelled"];
 
 let ordersState = { status: "all", search: "" };
 
-/* ---------- Tab switching (Catalog <-> Orders) ---------- */
+/* ---------- Tab switching (Catalog / Orders / Complaints / CRM) ---------- */
+const ADMIN_TABS = ["catalog", "orders", "complaints", "crm"];
+const ADMIN_TAB_META = {
+  catalog: { eyebrow: "Catalog Management", heading: "Manage sarees", subtext: "Changes here save to the server and appear for every visitor immediately." },
+  orders: { eyebrow: "Order Management", heading: "Manage orders", subtext: "Update order status — customers see the change on their tracking page immediately." },
+  complaints: { eyebrow: "Customer Care", heading: "Complaints & Feedback", subtext: "Respond to customers here — they see status updates and notes on their account page." },
+  crm: { eyebrow: "Business Insights", heading: "CRM Dashboard", subtext: "Live figures computed directly from your orders and complaints data." }
+};
+
 function setAdminTab(tab) {
-  document.getElementById("tabCatalogBtn").classList.toggle("active", tab === "catalog");
-  document.getElementById("tabOrdersBtn").classList.toggle("active", tab === "orders");
-  document.getElementById("catalogSection").style.display = tab === "catalog" ? "" : "none";
-  document.getElementById("ordersSection").style.display = tab === "orders" ? "" : "none";
+  ADMIN_TABS.forEach((t) => {
+    const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Btn`);
+    if (btn) btn.classList.toggle("active", t === tab);
+    const section = document.getElementById(`${t}Section`);
+    if (section) section.style.display = t === tab ? "" : "none";
+  });
+
+  const meta = ADMIN_TAB_META[tab];
+  document.getElementById("adminEyebrow").textContent = meta.eyebrow;
+  document.getElementById("adminHeading").textContent = meta.heading;
+  document.getElementById("adminSubtext").textContent = meta.subtext;
 
   if (tab === "orders") {
-    document.getElementById("adminEyebrow").textContent = "Order Management";
-    document.getElementById("adminHeading").textContent = "Manage orders";
-    document.getElementById("adminSubtext").textContent = "Update order status — customers see the change on their tracking page immediately.";
     renderOrderFilters();
     loadOrders();
-  } else {
-    document.getElementById("adminEyebrow").textContent = "Catalog Management";
-    document.getElementById("adminHeading").textContent = "Manage sarees";
-    document.getElementById("adminSubtext").textContent = "Changes here save to the server and appear for every visitor immediately.";
+  } else if (tab === "complaints" && typeof renderComplaintFilters === "function") {
+    renderComplaintFilters();
+    loadComplaints();
+  } else if (tab === "crm" && typeof loadCrmDashboard === "function") {
+    loadCrmDashboard();
   }
 }
 
 document.getElementById("tabCatalogBtn")?.addEventListener("click", () => setAdminTab("catalog"));
 document.getElementById("tabOrdersBtn")?.addEventListener("click", () => setAdminTab("orders"));
+document.getElementById("tabComplaintsBtn")?.addEventListener("click", () => setAdminTab("complaints"));
+document.getElementById("tabCrmBtn")?.addEventListener("click", () => setAdminTab("crm"));
 
 function renderOrderFilters() {
   const wrap = document.getElementById("orderStatusFilters");

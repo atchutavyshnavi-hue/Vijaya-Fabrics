@@ -15,6 +15,10 @@ const categoriesRoutes = require("./routes/categories");
 const cartRoutes = require("./routes/cart");
 const ordersRoutes = require("./routes/orders");
 const adminOrdersRoutes = require("./routes/adminOrders");
+const complaintsRoutes = require("./routes/complaints");
+const adminComplaintsRoutes = require("./routes/adminComplaints");
+const reviewsRoutes = require("./routes/reviews");
+const crmRoutes = require("./routes/crm");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -36,6 +40,10 @@ app.use("/api/categories", categoriesRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/admin/orders", adminOrdersRoutes); // admin-only OMS — separate path, own requireAdmin gate
+app.use("/api/complaints", complaintsRoutes); // customer submit + view own complaints
+app.use("/api/admin/complaints", adminComplaintsRoutes); // admin-only complaint management
+app.use("/api/reviews", reviewsRoutes); // public read, purchase-verified write
+app.use("/api/admin/crm", crmRoutes); // admin-only CRM analytics dashboard
 
 // Frontend (static site) — express.static serves index.html automatically at "/"
 const frontendDir = path.join(__dirname, "..", "frontend");

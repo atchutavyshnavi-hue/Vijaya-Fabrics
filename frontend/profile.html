@@ -56,6 +56,7 @@
         <button data-tab="info" class="active">Personal Info</button>
         <button data-tab="addresses">Saved Addresses</button>
         <button data-tab="orders">Order History</button>
+        <button data-tab="complaints">Complaints &amp; Feedback</button>
       </div>
 
       <div class="tab-panel active" data-tab-panel="info">
@@ -146,6 +147,35 @@
           <h3>No orders yet</h3>
           <p>Once you place an order, you'll be able to track it here.</p>
           <a href="catalog.html" class="btn btn-primary" style="margin-top:1em;">Browse the Catalog</a>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="complaints">
+        <div class="admin-card" style="margin-bottom:1.4em;">
+          <h3 style="margin-top:0;">Raise a Complaint / Feedback</h3>
+          <form id="complaintForm">
+            <div class="form-field">
+              <label for="cSubject">Subject</label>
+              <input type="text" id="cSubject" required maxlength="120">
+            </div>
+            <div class="form-field">
+              <label for="cOrder">Related Order (optional)</label>
+              <select id="cOrder">
+                <option value="">— Not related to a specific order —</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="cDescription">Details</label>
+              <textarea id="cDescription" rows="4" required maxlength="2000"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+          </form>
+        </div>
+
+        <div id="complaintsList"></div>
+        <div class="empty-state" id="noComplaintsState" style="display:none;">
+          <h3>No complaints yet</h3>
+          <p>Anything you raise with us will be tracked here, right through to resolution.</p>
         </div>
       </div>
     </div>

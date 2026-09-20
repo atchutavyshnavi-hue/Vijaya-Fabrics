@@ -240,6 +240,77 @@ async function renderOrders() {
   }
 }
 
+/* ---------- Complaints & Feedback ---------- */
+function complaintStatusClass(status) {
+  return status.toLowerCase().replace(/\s+/g, "-");
+}
+
+function complaintCardHtml(c) {
+  const date = new Date(c.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  return `
+    <div class="order-card">
+      <div class="order-card-head">
+        <div>
+          <div class="onum">${c.subject}</div>
+          <div class="odate">${date}${c.order && c.order.orderNumber ? " · " + c.order.orderNumber : ""}</div>
+        </div>
+        <span class="status-pill ${complaintStatusClass(c.status)}">${c.status}</span>
+      </div>
+      <p style="font-size:.88rem; margin-top:.8em;">${c.description}</p>
+      ${c.adminNote ? `<p style="font-size:.82rem; color:var(--charcoal-soft); margin-top:.6em; padding-top:.6em; border-top:1px solid var(--line);"><strong>Vijaya Fabrics:</strong> ${c.adminNote}</p>` : ""}
+    </div>`;
+}
+
+async function renderComplaints() {
+  const listEl = document.getElementById("complaintsList");
+  const emptyEl = document.getElementById("noComplaintsState");
+  try {
+    const complaints = await api.complaints.list();
+    if (!complaints.length) {
+      listEl.innerHTML = "";
+      emptyEl.style.display = "block";
+      return;
+    }
+    emptyEl.style.display = "none";
+    listEl.innerHTML = complaints.map(complaintCardHtml).join("");
+  } catch (err) {
+    vfToast(err.message || "Could not load your complaints.", true);
+  }
+}
+
+async function populateComplaintOrderOptions() {
+  const select = document.getElementById("cOrder");
+  try {
+    const orders = await api.orders.list();
+    orders.forEach((o) => {
+      const opt = document.createElement("option");
+      opt.value = o.id;
+      opt.textContent = `${o.orderNumber} — ${new Date(o.createdAt).toLocaleDateString("en-IN")}`;
+      select.appendChild(opt);
+    });
+  } catch (err) { /* non-fatal — the field is optional */ }
+}
+
+document.getElementById("complaintForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector("button[type=submit]");
+  btn.disabled = true;
+  try {
+    await api.complaints.submit({
+      subject: document.getElementById("cSubject").value.trim(),
+      description: document.getElementById("cDescription").value.trim(),
+      orderId: document.getElementById("cOrder").value || undefined
+    });
+    document.getElementById("complaintForm").reset();
+    vfToast("Thanks — we've logged your complaint.");
+    await renderComplaints();
+  } catch (err) {
+    vfToast(err.message || "Could not submit this complaint.", true);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 /* ---------- Boot ---------- */
 async function initProfilePage() {
   await api.customer.silentRefresh();
@@ -258,9 +329,11 @@ async function initProfilePage() {
   renderInfo();
   renderAddressesTab();
   await renderOrders();
+  await populateComplaintOrderOptions();
+  await renderComplaints();
 
   const tab = new URLSearchParams(location.search).get("tab");
-  if (tab && ["info", "addresses", "orders"].includes(tab)) switchProfileTab(tab);
+  if (tab && ["info", "addresses", "orders", "complaints"].includes(tab)) switchProfileTab(tab);
 }
 
 document.addEventListener("DOMContentLoaded", initProfilePage);
