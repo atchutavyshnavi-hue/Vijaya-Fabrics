@@ -47,13 +47,19 @@
   <div class="container">
     <div class="section-head" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1em;">
       <div>
-        <span class="eyebrow">Catalog Management</span>
-        <h1 style="font-size:clamp(1.8rem,3.5vw,2.4rem);">Manage sarees</h1>
-        <p>Changes here save to the server and appear for every visitor immediately.</p>
+        <span class="eyebrow" id="adminEyebrow">Catalog Management</span>
+        <h1 style="font-size:clamp(1.8rem,3.5vw,2.4rem);" id="adminHeading">Manage sarees</h1>
+        <p id="adminSubtext">Changes here save to the server and appear for every visitor immediately.</p>
       </div>
       <button class="btn btn-outline btn-sm" id="logoutBtn">Log Out</button>
     </div>
 
+    <div class="admin-tabbar" style="display:flex; gap:10px; margin-bottom:1.6em;">
+      <button class="chip active" id="tabCatalogBtn" data-admin-tab="catalog">Catalog</button>
+      <button class="chip" id="tabOrdersBtn" data-admin-tab="orders">Orders</button>
+    </div>
+
+    <div id="catalogSection">
     <div class="admin-grid">
       <div class="admin-card">
         <h3 id="formTitle">Add a new saree</h3>
@@ -72,12 +78,20 @@
             <select id="fSubtype" required></select>
           </div>
           <div class="form-field">
-            <label for="fPrice">Price (₹)</label>
+            <label for="fPrice">Retail Price (₹)</label>
             <input type="number" id="fPrice" min="0" required placeholder="e.g. 2999">
+          </div>
+          <div class="form-field">
+            <label for="fBulkPrice">Bulk / Reseller Price per piece (₹, optional)</label>
+            <input type="number" id="fBulkPrice" min="0" placeholder="e.g. 2549">
           </div>
           <div class="form-field">
             <label for="fFabric">Fabric</label>
             <input type="text" id="fFabric" required placeholder="e.g. Pattu Silk">
+          </div>
+          <div class="form-field">
+            <label for="fColours">Available Colours (comma-separated)</label>
+            <input type="text" id="fColours" placeholder="e.g. Maroon, Emerald, Ivory">
           </div>
           <div class="form-field">
             <label for="fDesc">Description</label>
@@ -88,8 +102,32 @@
             <input type="file" id="fImage" accept="image/*">
             <img id="fImagePreview" style="margin-top:10px; width:90px; height:112px; object-fit:cover; border-radius:4px; display:none;">
           </div>
+
+          <div class="form-field">
+            <label style="font-weight:600;">Inventory</label>
+          </div>
+          <div class="form-field">
+            <label for="fStock">Pieces in Stock</label>
+            <input type="number" id="fStock" min="0" placeholder="e.g. 50">
+          </div>
+          <div class="form-field">
+            <label for="fBalesAvailable">Bales Available</label>
+            <input type="number" id="fBalesAvailable" min="0" placeholder="e.g. 5">
+          </div>
+          <div class="form-field">
+            <label for="fPiecesPerBale">Pieces per Bale</label>
+            <input type="number" id="fPiecesPerBale" min="0" placeholder="e.g. 10">
+          </div>
+          <div class="form-field">
+            <label for="fCostPerBale">Cost per Bale (₹)</label>
+            <input type="number" id="fCostPerBale" min="0" placeholder="e.g. 25000">
+          </div>
+
           <div class="form-field">
             <label><input type="checkbox" id="fFeatured" style="width:auto; margin-right:8px;">Show on homepage as Featured</label>
+          </div>
+          <div class="form-field">
+            <label><input type="checkbox" id="fActive" checked style="width:auto; margin-right:8px;">Active (visible in customer catalog)</label>
           </div>
           <div style="display:flex; gap:10px;">
             <button type="submit" class="btn btn-primary" id="saveBtn">Save Saree</button>
@@ -103,12 +141,41 @@
         <div style="overflow:auto;">
           <table class="admin-table">
             <thead>
-              <tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th></th></tr>
+              <tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr>
             </thead>
             <tbody id="tableBody"></tbody>
           </table>
         </div>
         <button class="btn btn-outline btn-sm" id="resetBtn" style="margin-top:1.4em;">Reset to sample catalog</button>
+      </div>
+    </div>
+    </div>
+
+    <div id="ordersSection" style="display:none;">
+      <div class="admin-card" style="margin-bottom:1.4em;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;" id="orderStatusFilters"></div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="orderSearch" placeholder="Search order number…" style="padding:.5em .8em; border:1px solid var(--line); border-radius:6px; font-size:.85rem;">
+            <button class="btn btn-outline btn-sm" id="orderRefreshBtn">Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h3>Orders (<span id="orderCountLabel">0</span>)</h3>
+        <div style="overflow:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order #</th><th>Customer</th><th>Items</th><th>Amount</th>
+                <th>Payment</th><th>Status</th><th>Placed</th><th>Update</th>
+              </tr>
+            </thead>
+            <tbody id="orderTableBody"></tbody>
+          </table>
+        </div>
+        <p id="ordersEmptyState" style="display:none; color:var(--charcoal-soft); margin-top:1em;">No orders match this filter.</p>
       </div>
     </div>
   </div>
@@ -124,5 +191,6 @@
 <script src="js/common.js"></script>
 <script src="js/api.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/admin-orders.js"></script>
 </body>
 </html>

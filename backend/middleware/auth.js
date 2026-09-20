@@ -54,4 +54,21 @@ function optionalCustomer(req, res, next) {
   next();
 }
 
-module.exports = { requireAdmin, requireCustomer, optionalCustomer };
+// Attaches req.admin = true if a valid admin token is present, but never
+// blocks the request — used so public catalog routes can return full
+// inventory detail to the admin panel while masking it for everyone else.
+function optionalAdmin(req, res, next) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  if (token) {
+    try {
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      if (payload.role === "admin") req.admin = true;
+    } catch (err) {
+      // ignore — treated as a regular customer/guest
+    }
+  }
+  next();
+}
+
+module.exports = { requireAdmin, requireCustomer, optionalCustomer, optionalAdmin };

@@ -92,9 +92,16 @@ async function handleFormSubmit(e) {
   formData.append("category", document.getElementById("fCategory").value);
   formData.append("subtype", document.getElementById("fSubtype").value);
   formData.append("price", document.getElementById("fPrice").value);
+  formData.append("bulkPrice", document.getElementById("fBulkPrice").value);
   formData.append("fabric", document.getElementById("fFabric").value.trim());
+  formData.append("colours", document.getElementById("fColours").value.trim());
   formData.append("description", document.getElementById("fDesc").value.trim());
   formData.append("featured", document.getElementById("fFeatured").checked);
+  formData.append("active", document.getElementById("fActive").checked);
+  formData.append("stock", document.getElementById("fStock").value || "0");
+  formData.append("balesAvailable", document.getElementById("fBalesAvailable").value || "0");
+  formData.append("piecesPerBale", document.getElementById("fPiecesPerBale").value || "0");
+  formData.append("costPerBale", document.getElementById("fCostPerBale").value || "0");
   if (pendingImageFile) formData.append("image", pendingImageFile);
 
   saveBtn.disabled = true;
@@ -120,6 +127,7 @@ async function handleFormSubmit(e) {
 function resetForm() {
   document.getElementById("sareeForm").reset();
   document.getElementById("editId").value = "";
+  document.getElementById("fActive").checked = true;
   document.getElementById("formTitle").textContent = "Add a new saree";
   document.getElementById("cancelEdit").style.display = "none";
   document.getElementById("fImagePreview").style.display = "none";
@@ -138,11 +146,12 @@ async function renderTable() {
   document.getElementById("countLabel").textContent = list.length;
   const body = document.getElementById("tableBody");
   body.innerHTML = list.map(p => `
-    <tr>
+    <tr${p.active === false ? ' style="opacity:.55;"' : ""}>
       <td><img src="${p.image}" alt="${p.name}"></td>
-      <td>${p.name}${p.featured ? ' <span class="badge">Featured</span>' : ""}</td>
+      <td>${p.name}${p.featured ? ' <span class="badge">Featured</span>' : ""}${p.active === false ? ' <span class="badge">Inactive</span>' : ""}</td>
       <td>${getCategoryFrom(categories, p.category)?.label || p.category}</td>
       <td>${formatINR(p.price)}</td>
+      <td>${p.stock <= 0 ? '<strong style="color:var(--ink-maroon);">Out</strong>' : p.stock <= 5 ? `<strong style="color:var(--ink-maroon);">${p.stock} left</strong>` : p.stock}</td>
       <td>
         <div class="row-actions">
           <button data-edit="${p.id}">Edit</button>
@@ -191,9 +200,16 @@ function loadForEdit(id, list) {
   populateSubtypeSelect(p.category);
   document.getElementById("fSubtype").value = p.subtype;
   document.getElementById("fPrice").value = p.price;
+  document.getElementById("fBulkPrice").value = p.bulkPrice ?? "";
   document.getElementById("fFabric").value = p.fabric;
+  document.getElementById("fColours").value = (p.colours || []).join(", ");
   document.getElementById("fDesc").value = p.description;
   document.getElementById("fFeatured").checked = !!p.featured;
+  document.getElementById("fActive").checked = p.active !== false;
+  document.getElementById("fStock").value = p.stock ?? 0;
+  document.getElementById("fBalesAvailable").value = p.bales?.available ?? 0;
+  document.getElementById("fPiecesPerBale").value = p.bales?.piecesPerBale ?? 0;
+  document.getElementById("fCostPerBale").value = p.bales?.costPerBale ?? 0;
   const preview = document.getElementById("fImagePreview");
   preview.src = p.image;
   preview.style.display = "block";

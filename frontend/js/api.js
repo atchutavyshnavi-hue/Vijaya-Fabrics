@@ -28,13 +28,19 @@ const api = {
     if (category && category !== "all") params.set("category", category);
     if (subtype && subtype !== "all") params.set("subtype", subtype);
     const qs = params.toString();
-    const res = await fetch(`${this.base}/sarees${qs ? "?" + qs : ""}`);
+    const token = this.getToken();
+    const res = await fetch(`${this.base}/sarees${qs ? "?" + qs : ""}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
     if (!res.ok) throw new Error("Could not load the catalog.");
     return res.json();
   },
 
   async getSaree(id) {
-    const res = await fetch(`${this.base}/sarees/${id}`);
+    const token = this.getToken();
+    const res = await fetch(`${this.base}/sarees/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
     if (!res.ok) throw new Error("Saree not found.");
     return res.json();
   },
@@ -88,6 +94,32 @@ const api = {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Reset failed.");
     return data;
+  },
+
+  /* ---------- Admin: Order Management (OMS) ---------- */
+  adminOrders: {
+    async list({ status, search } = {}) {
+      const params = new URLSearchParams();
+      if (status && status !== "all") params.set("status", status);
+      if (search) params.set("search", search);
+      const qs = params.toString();
+      const res = await fetch(`${api.base}/admin/orders${qs ? "?" + qs : ""}`, {
+        headers: { Authorization: `Bearer ${api.getToken()}` }
+      });
+      const data = await res.json().catch(() => ([]));
+      if (!res.ok) throw new Error(data.error || "Could not load orders.");
+      return data;
+    },
+    async updateStatus(id, { status, paymentStatus } = {}) {
+      const res = await fetch(`${api.base}/admin/orders/${id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${api.getToken()}` },
+        body: JSON.stringify({ status, paymentStatus })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not update this order.");
+      return data;
+    }
   },
 
   /* =====================================================================

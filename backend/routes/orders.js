@@ -1,6 +1,7 @@
 const express = require("express");
 const { Order } = require("../models/Order");
 const Cart = require("../models/Cart");
+const Saree = require("../models/Saree");
 const { requireCustomer } = require("../middleware/auth");
 
 const router = express.Router();
@@ -50,25 +51,63 @@ router.post("/", requireCustomer, async (req, res, next) => {
 
     const totalAmount = items.reduce((sum, it) => sum + it.price * it.qty, 0);
 
-    const order = await Order.create({
-      orderNumber: generateOrderNumber(),
-      user: req.userId,
-      items,
-      shippingAddress: {
-        name: shippingAddress.name.trim(),
-        phone: shippingAddress.phone.trim(),
-        line1: shippingAddress.line1.trim(),
-        line2: (shippingAddress.line2 || "").trim(),
-        city: shippingAddress.city.trim(),
-        state: shippingAddress.state.trim(),
-        pincode: String(shippingAddress.pincode).trim()
-      },
-      totalAmount,
-      paymentMethod: paymentMethod || "Cash on Delivery",
-      paymentStatus: "Pending",
-      orderStatus: "Received",
-      statusHistory: [{ status: "Received" }]
-    });
+    // Reserve stock atomically, one item at a time. Each findOneAndUpdate only
+    // succeeds if enough stock is still available at that instant — this is
+    // what stops two customers from both buying the last piece in a race.
+    // If any item fails, everything already decremented in this order is
+    // rolled back so stock never goes missing on a rejected order.
+    const decremented = [];
+    for (const it of items) {
+      const updated = await Saree.findOneAndUpdate(
+        { _id: it.saree, stock: { $gte: it.qty } },
+        { $inc: { stock: -it.qty } },
+        { new: true }
+      );
+      if (!updated) {
+        for (const d of decremented) {
+          await Saree.findByIdAndUpdate(d.saree, { $inc: { stock: d.qty } });
+        }
+        const current = await Saree.findById(it.saree);
+        const available = current ? current.stock : 0;
+        return res.status(409).json({
+          error: available > 0
+            ? `Only ${available} piece${available === 1 ? "" : "s"} of "${it.name}" are currently available.`
+            : `"${it.name}" just went out of stock.`,
+          sareeId: it.saree,
+          available
+        });
+      }
+      decremented.push({ saree: it.saree, qty: it.qty });
+    }
+
+    let order;
+    try {
+      order = await Order.create({
+        orderNumber: generateOrderNumber(),
+        user: req.userId,
+        items,
+        shippingAddress: {
+          name: shippingAddress.name.trim(),
+          phone: shippingAddress.phone.trim(),
+          line1: shippingAddress.line1.trim(),
+          line2: (shippingAddress.line2 || "").trim(),
+          city: shippingAddress.city.trim(),
+          state: shippingAddress.state.trim(),
+          pincode: String(shippingAddress.pincode).trim()
+        },
+        totalAmount,
+        paymentMethod: paymentMethod || "Cash on Delivery",
+        paymentStatus: "Pending",
+        orderStatus: "Received",
+        statusHistory: [{ status: "Received" }]
+      });
+    } catch (createErr) {
+      // Order record failed to save — give back every piece of stock we reserved.
+      for (const d of decremented) {
+        await Saree.findByIdAndUpdate(d.saree, { $inc: { stock: d.qty } });
+      }
+      throw createErr;
+    }
 
     cart.items = [];
     await cart.save();

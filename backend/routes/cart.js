@@ -43,12 +43,24 @@ router.post("/", requireCustomer, async (req, res, next) => {
     if (!sareeId) return res.status(400).json({ error: "sareeId is required." });
 
     const saree = await Saree.findById(sareeId);
-    if (!saree) return res.status(404).json({ error: "Saree not found." });
+    if (!saree || saree.active === false) return res.status(404).json({ error: "Saree not found." });
 
     const cart = await getOrCreateCart(req.userId);
     const existing = cart.items.find((it) => it.saree.toString() === sareeId);
+    const wantedTotal = (existing ? existing.qty : 0) + quantity;
+
+    if (saree.stock <= 0) {
+      return res.status(400).json({ error: `"${saree.name}" is currently out of stock.` });
+    }
+    if (wantedTotal > saree.stock) {
+      return res.status(400).json({
+        error: `Only ${saree.stock} piece${saree.stock === 1 ? "" : "s"} of "${saree.name}" are currently available.`,
+        available: saree.stock
+      });
+    }
+
     if (existing) {
-      existing.qty += quantity;
+      existing.qty = wantedTotal;
     } else {
       cart.items.push({ saree: sareeId, qty: quantity });
     }
@@ -67,6 +79,15 @@ router.put("/:sareeId", requireCustomer, async (req, res, next) => {
     const cart = await getOrCreateCart(req.userId);
     const item = cart.items.find((it) => it.saree.toString() === req.params.sareeId);
     if (!item) return res.status(404).json({ error: "Item not in cart." });
+
+    const saree = await Saree.findById(req.params.sareeId);
+    if (saree && quantity > saree.stock) {
+      return res.status(400).json({
+        error: `Only ${saree.stock} piece${saree.stock === 1 ? "" : "s"} of "${saree.name}" are currently available.`,
+        available: saree.stock
+      });
+    }
+
     item.qty = quantity;
     await cart.save();
     res.json(await serializeCart(cart));

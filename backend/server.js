@@ -12,6 +12,7 @@ const sareesRoutes = require("./routes/sarees");
 const categoriesRoutes = require("./routes/categories");
 const cartRoutes = require("./routes/cart");
 const ordersRoutes = require("./routes/orders");
+const adminOrdersRoutes = require("./routes/adminOrders");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -32,6 +33,7 @@ app.use("/api/sarees", sareesRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", ordersRoutes);
+app.use("/api/admin/orders", adminOrdersRoutes); // admin-only OMS — separate path, own requireAdmin gate
 
 // Frontend (static site) — express.static serves index.html automatically at "/"
 const frontendDir = path.join(__dirname, "..", "frontend");

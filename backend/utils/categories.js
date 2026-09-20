@@ -42,6 +42,20 @@ const CATEGORIES = [
     tagline: "Banaras, Mangalagiri & Dharmavaram silk pattu",
     color: "#9A1B4E",
     subtypes: ["Banaras Pattu", "Mangalagiri Pattu", "Dharmavaram Pattu", "Light Weight Pattu", "Sico Pattu"]
+  },
+  {
+    slug: "halfsarees",
+    label: "Half Sarees",
+    tagline: "Langa voni sets for festivals and functions",
+    color: "#C2410C",
+    subtypes: ["Cotton Half Saree", "Silk Half Saree", "Fancy Half Saree"]
+  },
+  {
+    slug: "dresses",
+    label: "Dresses",
+    tagline: "Ready-made dresses and unstitched dress materials",
+    color: "#3E5C76",
+    subtypes: ["Ready-made Dress", "Dress Material"]
   }
 ];
 

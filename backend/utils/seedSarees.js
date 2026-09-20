@@ -6,17 +6,29 @@ function buildSeedData() {
   const items = [];
   let seed = 0;
 
+  const COLOUR_POOL = [
+    ["Maroon", "Gold"], ["Emerald", "Ivory"], ["Indigo", "White"], ["Mustard", "Beige"],
+    ["Rust", "Cream"], ["Teal", "Gold"], ["Wine", "Gold"], ["Peach", "Silver"],
+    ["Ivory", "Black"], ["Sky Blue", "White"], ["Blush Pink", "Silver"], ["Deep Purple", "Gold"]
+  ];
+
   const push = (category, subtype, name, price, fabric, desc) => {
     const cat = getCategory(category);
+    const stock = (items.length * 7) % 25; // varied sample stock — some plenty, some low, one or two zero
     items.push({
       name,
       category,
       subtype,
       price,
+      bulkPrice: Math.round(price * 0.85),
       fabric,
       description: desc,
       image: generateSwatch(name, cat.color, seed++),
-      featured: items.length % 4 === 3
+      featured: items.length % 4 === 3,
+      colours: COLOUR_POOL[items.length % COLOUR_POOL.length],
+      stock,
+      bales: { available: Math.floor(stock / 10), piecesPerBale: 10, costPerBale: Math.round(price * 0.85 * 10) },
+      active: true
     });
   };
 

@@ -74,16 +74,20 @@ function renderGrid() {
 }
 
 function cardHtml(p) {
+  const outOfStock = p.inStock === false;
   return `
     <div class="product-card" data-id="${p.id}">
       <div class="thumb" style="position:relative;">
         <img src="${p.image}" alt="${p.name}" loading="lazy">
-        <button class="btn btn-sm btn-gold" data-quick-add="${p.id}" style="position:absolute; bottom:10px; right:10px;">+ Cart</button>
+        ${outOfStock
+          ? `<span class="badge" style="position:absolute; bottom:10px; right:10px;">Out of stock</span>`
+          : `<button class="btn btn-sm btn-gold" data-quick-add="${p.id}" style="position:absolute; bottom:10px; right:10px;">+ Cart</button>`}
       </div>
       <div class="info">
         <span class="sub">${p.subtype}</span>
         <h4>${p.name}</h4>
         <span class="price">${formatINR(p.price)}</span>
+        ${p.lowStockCount ? `<span class="sub" style="color:var(--ink-maroon); display:block;">${p.lowStockCount} left in stock</span>` : ""}
       </div>
     </div>`;
 }
@@ -104,6 +108,16 @@ function openModal(id) {
   const p = state.allSarees.find(s => s.id === id);
   if (!p) return;
   const cat = getCategoryFrom(state.categories, p.category);
+  const outOfStock = p.inStock === false;
+  const coloursHtml = (p.colours || []).length
+    ? `<div class="spec-row"><span>Available Colours</span><strong>${p.colours.join(", ")}</strong></div>`
+    : "";
+  const stockHtml = outOfStock
+    ? `<div class="spec-row"><span>Availability</span><strong style="color:var(--ink-maroon);">Out of stock</strong></div>`
+    : p.lowStockCount
+      ? `<div class="spec-row"><span>Availability</span><strong style="color:var(--ink-maroon);">${p.lowStockCount} left in stock</strong></div>`
+      : `<div class="spec-row"><span>Availability</span><strong>In stock</strong></div>`;
+
   document.getElementById("modalContent").innerHTML = `
     <img src="${p.image}" alt="${p.name}">
     <div class="modal-body">
@@ -115,8 +129,10 @@ function openModal(id) {
       <div class="spec-row"><span>Fabric</span><strong>${p.fabric}</strong></div>
       <div class="spec-row"><span>Category</span><strong>${cat ? cat.label : p.category}</strong></div>
       <div class="spec-row"><span>Weave / Origin</span><strong>${p.subtype}</strong></div>
+      ${coloursHtml}
+      ${stockHtml}
       <div style="margin-top:1.6em; display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn btn-gold" id="modalAddCart">Add to Cart</button>
+        <button class="btn btn-gold" id="modalAddCart" ${outOfStock ? "disabled" : ""}>${outOfStock ? "Out of Stock" : "Add to Cart"}</button>
         <a class="btn btn-primary" target="_blank" rel="noopener"
            href="https://wa.me/919999999999?text=${encodeURIComponent("Hello, I'd like to know more about: " + p.name)}">
            Enquire on WhatsApp
@@ -128,7 +144,9 @@ function openModal(id) {
   document.querySelectorAll(".modal-close, #modalCloseBtn").forEach(b =>
     b.addEventListener("click", closeModal)
   );
-  document.getElementById("modalAddCart").addEventListener("click", () => quickAddToCart(p.id));
+  if (!outOfStock) {
+    document.getElementById("modalAddCart").addEventListener("click", () => quickAddToCart(p.id));
+  }
   history.replaceState(null, "", `catalog.html?product=${id}`);
 }
 
