@@ -3,6 +3,7 @@ backend/node_modules/
 
 # Environment secrets
 backend/.env
+backend/.env.example
 
 # Runtime data (auto-generated on first run)
 backend/data/db.json
