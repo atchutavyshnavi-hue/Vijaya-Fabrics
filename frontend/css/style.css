@@ -273,6 +273,9 @@ footer.site a:hover{color:var(--zari-gold-light);}
 .admin-grid{display:grid; grid-template-columns:.9fr 1.1fr; gap:32px; align-items:flex-start;}
 @media (max-width:940px){.admin-grid{grid-template-columns:1fr;}}
 .admin-card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:26px;}
+.chart-card-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:1em;}
+.chart-card-head h3{margin:0;}
+.chart-type-select{font-size:.78rem; padding:5px 8px; border-radius:6px; border:1px solid var(--line); background:var(--white); color:var(--charcoal); cursor:pointer;}
 .admin-table{width:100%; border-collapse:collapse; font-size:.85rem;}
 .admin-table th{text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--charcoal-soft); border-bottom:1px solid var(--line); padding:8px 6px;}
 .admin-table td{padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:middle;}

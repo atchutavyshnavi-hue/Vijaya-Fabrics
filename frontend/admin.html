@@ -236,22 +236,50 @@
 
       <div class="admin-grid" style="grid-template-columns:1.3fr 1fr; gap:14px;">
         <div class="admin-card">
-          <h3 style="margin-top:0;">Monthly Orders &amp; Revenue (last 6 months)</h3>
+          <div class="chart-card-head">
+            <h3>Monthly Orders &amp; Revenue (last 6 months)</h3>
+            <select class="chart-type-select" data-chart="monthly">
+              <option value="bar">Bar</option>
+              <option value="line">Line</option>
+              <option value="pie">Pie</option>
+            </select>
+          </div>
           <div id="crmMonthlyChart"></div>
         </div>
         <div class="admin-card">
-          <h3 style="margin-top:0;">Orders by Status</h3>
+          <div class="chart-card-head">
+            <h3>Orders by Status</h3>
+            <select class="chart-type-select" data-chart="status">
+              <option value="bar">Bar</option>
+              <option value="pie">Pie</option>
+              <option value="line">Line</option>
+            </select>
+          </div>
           <div id="crmStatusChart"></div>
         </div>
       </div>
 
       <div class="admin-grid" style="grid-template-columns:1fr 1fr; gap:14px; margin-top:14px;">
         <div class="admin-card">
-          <h3 style="margin-top:0;">Category Performance</h3>
+          <div class="chart-card-head">
+            <h3>Category Performance</h3>
+            <select class="chart-type-select" data-chart="category">
+              <option value="bar">Bar</option>
+              <option value="pie">Pie</option>
+              <option value="line">Line</option>
+            </select>
+          </div>
           <div id="crmCategoryChart"></div>
         </div>
         <div class="admin-card">
-          <h3 style="margin-top:0;">Complaints by Status</h3>
+          <div class="chart-card-head">
+            <h3>Complaints by Status</h3>
+            <select class="chart-type-select" data-chart="complaint">
+              <option value="bar">Bar</option>
+              <option value="pie">Pie</option>
+              <option value="line">Line</option>
+            </select>
+          </div>
           <div id="crmComplaintChart"></div>
         </div>
       </div>

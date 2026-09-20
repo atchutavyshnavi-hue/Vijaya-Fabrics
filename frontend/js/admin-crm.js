@@ -97,7 +97,17 @@ async function loadComplaints() {
   }
 }
 
-/* ---------- CRM Dashboard (dependency-free CSS bar charts) ---------- */
+/* ---------- CRM Dashboard (dependency-free CSS/SVG charts) ----------
+   Every chart supports Bar / Pie / Line via its own dropdown. No external
+   chart library — plain CSS bars, a conic-gradient pie, and a small inline
+   SVG line chart. Data always comes straight from the live /crm/summary
+   aggregation; only the chosen chart TYPE is client-side state. */
+
+const CHART_PALETTE = ["#C68A2E", "#6B1B24", "#1F4B4A", "#E4B863", "#8A5B14", "#4A1119", "#2B211B", "#5A4E44"];
+
+let chartTypeState = { monthly: "bar", status: "bar", category: "bar", complaint: "bar" };
+let lastCrmData = null; // cached so switching chart type doesn't need a refetch
+
 function barChartHtml(rows, { valueKey, labelKey, formatValue }) {
   if (!rows.length) return `<p style="color:var(--charcoal-soft); font-size:.85rem;">No data yet.</p>`;
   const max = Math.max(...rows.map(r => r[valueKey]), 1);
@@ -116,6 +126,94 @@ function barChartHtml(rows, { valueKey, labelKey, formatValue }) {
     </div>`;
 }
 
+function pieChartHtml(rows, { valueKey, labelKey, formatValue }) {
+  const total = rows.reduce((sum, r) => sum + r[valueKey], 0);
+  if (!total) return `<p style="color:var(--charcoal-soft); font-size:.85rem;">No data yet.</p>`;
+  let cumulative = 0;
+  const segments = rows.map((r, i) => {
+    const start = (cumulative / total) * 360;
+    cumulative += r[valueKey];
+    const end = (cumulative / total) * 360;
+    return `${CHART_PALETTE[i % CHART_PALETTE.length]} ${start}deg ${end}deg`;
+  }).join(", ");
+  const legend = rows.map((r, i) => `
+    <div style="display:flex; align-items:center; gap:7px; font-size:.8rem; margin-bottom:5px;">
+      <span style="width:10px; height:10px; border-radius:50%; background:${CHART_PALETTE[i % CHART_PALETTE.length]}; flex-shrink:0;"></span>
+      <span>${r[labelKey]}</span>
+      <strong style="margin-left:auto;">${formatValue ? formatValue(r[valueKey]) : r[valueKey]}</strong>
+    </div>`).join("");
+  return `
+    <div style="display:flex; gap:22px; align-items:center; flex-wrap:wrap;">
+      <div style="width:130px; height:130px; border-radius:50%; background:conic-gradient(${segments}); flex-shrink:0;"></div>
+      <div style="flex:1; min-width:150px;">${legend}</div>
+    </div>`;
+}
+
+function lineChartHtml(rows, { valueKey, labelKey, formatValue }) {
+  if (!rows.length) return `<p style="color:var(--charcoal-soft); font-size:.85rem;">No data yet.</p>`;
+  const w = 340, h = 160, pad = 30;
+  const max = Math.max(...rows.map(r => r[valueKey]), 1);
+  const stepX = rows.length > 1 ? (w - 2 * pad) / (rows.length - 1) : 0;
+  const points = rows.map((r, i) => ({
+    x: pad + i * stepX,
+    y: h - pad - (r[valueKey] / max) * (h - 2 * pad),
+    row: r
+  }));
+  const polyline = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const dots = points.map(p => `
+    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#C68A2E">
+      <title>${p.row[labelKey]}: ${formatValue ? formatValue(p.row[valueKey]) : p.row[valueKey]}</title>
+    </circle>`).join("");
+  const labels = points.map(p => `
+    <text x="${p.x.toFixed(1)}" y="${h - 8}" font-size="9" text-anchor="middle" fill="#5A4E44">${p.row[labelKey]}</text>`).join("");
+  return `
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%; max-width:380px; height:auto;">
+      <polyline points="${polyline}" fill="none" stroke="#C68A2E" stroke-width="2"></polyline>
+      ${dots}
+      ${labels}
+    </svg>`;
+}
+
+function renderChart(containerId, chartKey, rows, opts) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const type = chartTypeState[chartKey] || "bar";
+  if (type === "pie") el.innerHTML = pieChartHtml(rows, opts);
+  else if (type === "line") el.innerHTML = lineChartHtml(rows, opts);
+  else el.innerHTML = barChartHtml(rows, opts);
+}
+
+function renderAllCharts() {
+  if (!lastCrmData) return;
+  const data = lastCrmData;
+
+  renderChart(
+    "crmMonthlyChart", "monthly",
+    data.monthly.map(m => ({ label: m.label, value: m.revenue, count: m.count })),
+    { valueKey: "value", labelKey: "label", formatValue: (v) => formatINR(v) }
+  );
+
+  const statusRows = Object.entries(data.ordersByStatus).map(([status, count]) => ({ status, count }));
+  renderChart("crmStatusChart", "status", statusRows, { valueKey: "count", labelKey: "status" });
+
+  renderChart(
+    "crmCategoryChart", "category",
+    data.categoryPerformance.map(c => ({ label: c.category, value: c.revenue })),
+    { valueKey: "value", labelKey: "label", formatValue: (v) => formatINR(v) }
+  );
+
+  const complaintRows = Object.entries(data.complaintsByStatus).map(([status, count]) => ({ status, count }));
+  renderChart("crmComplaintChart", "complaint", complaintRows, { valueKey: "count", labelKey: "status" });
+}
+
+document.querySelectorAll(".chart-type-select").forEach((sel) => {
+  sel.value = chartTypeState[sel.dataset.chart] || "bar";
+  sel.addEventListener("change", () => {
+    chartTypeState[sel.dataset.chart] = sel.value;
+    renderAllCharts();
+  });
+});
+
 async function loadCrmDashboard() {
   const els = {
     totalOrders: document.getElementById("crmTotalOrders"),
@@ -123,14 +221,11 @@ async function loadCrmDashboard() {
     cancelled: document.getElementById("crmCancelled"),
     pending: document.getElementById("crmPending"),
     revenue: document.getElementById("crmRevenue"),
-    complaints: document.getElementById("crmComplaints"),
-    monthlyChart: document.getElementById("crmMonthlyChart"),
-    statusChart: document.getElementById("crmStatusChart"),
-    categoryChart: document.getElementById("crmCategoryChart"),
-    complaintChart: document.getElementById("crmComplaintChart")
+    complaints: document.getElementById("crmComplaints")
   };
   try {
     const data = await api.crm.summary();
+    lastCrmData = data;
 
     els.totalOrders.textContent = data.totalOrders;
     els.delivered.textContent = data.delivered;
@@ -139,21 +234,7 @@ async function loadCrmDashboard() {
     els.revenue.textContent = formatINR(data.totalRevenue);
     els.complaints.textContent = data.totalComplaints;
 
-    els.monthlyChart.innerHTML = barChartHtml(
-      data.monthly.map(m => ({ label: m.label, value: m.revenue, count: m.count })),
-      { valueKey: "value", labelKey: "label", formatValue: (v) => formatINR(v) }
-    );
-
-    const statusRows = Object.entries(data.ordersByStatus).map(([status, count]) => ({ status, count }));
-    els.statusChart.innerHTML = barChartHtml(statusRows, { valueKey: "count", labelKey: "status" });
-
-    els.categoryChart.innerHTML = barChartHtml(
-      data.categoryPerformance.map(c => ({ label: c.category, value: c.revenue })),
-      { valueKey: "value", labelKey: "label", formatValue: (v) => formatINR(v) }
-    );
-
-    const complaintRows = Object.entries(data.complaintsByStatus).map(([status, count]) => ({ status, count }));
-    els.complaintChart.innerHTML = barChartHtml(complaintRows, { valueKey: "count", labelKey: "status" });
+    renderAllCharts();
   } catch (err) {
     vfToast(err.message || "Could not load the CRM dashboard.", true);
   }
