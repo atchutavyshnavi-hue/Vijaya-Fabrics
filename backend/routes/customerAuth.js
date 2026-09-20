@@ -1,8 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 const User = require("../models/User");
 const { requireCustomer } = require("../middleware/auth");
+const { sendOtpEmail } = require("../utils/mailer");
 const {
   signAccessToken,
   signRefreshToken,
@@ -10,6 +12,10 @@ const {
   hashToken,
   refreshCookieOptions
 } = require("../utils/tokens");
+
+function hashOtp(otp) {
+  return crypto.createHash("sha256").update(String(otp)).digest("hex");
+}
 
 const router = express.Router();
 const COOKIE_NAME = () => process.env.REFRESH_COOKIE_NAME || "vf_refresh";
@@ -71,6 +77,82 @@ router.post("/login", async (req, res, next) => {
 
     const accessToken = await issueSession(res, user);
     res.json({ accessToken, user: publicUser(user) });
+  } catch (err) { next(err); }
+});
+
+// POST /api/auth/customer/forgot-password  { email }
+// Always returns the same generic message whether or not the account exists,
+// so this endpoint can't be used to find out which emails are registered.
+router.post("/forgot-password", async (req, res, next) => {
+  try {
+    const { email } = req.body || {};
+    if (!email || !EMAIL_RE.test(email.trim())) {
+      return res.status(400).json({ error: "A valid email is required." });
+    }
+
+    const genericResponse = { message: "If that email is registered, we've sent a 6-digit code to it." };
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+    if (!user) return res.json(genericResponse);
+
+    if (user.resetOtpLastSentAt && Date.now() - user.resetOtpLastSentAt.getTime() < 60 * 1000) {
+      return res.status(429).json({ error: "Please wait a minute before requesting another code." });
+    }
+
+    const otp = crypto.randomInt(100000, 1000000).toString(); // always 6 digits
+    user.resetOtpHash = hashOtp(otp);
+    user.resetOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    user.resetOtpAttempts = 0;
+    user.resetOtpLastSentAt = new Date();
+    await user.save();
+
+    await sendOtpEmail(user.email, otp);
+
+    res.json(genericResponse);
+  } catch (err) { next(err); }
+});
+
+// POST /api/auth/customer/reset-password  { email, otp, newPassword }
+router.post("/reset-password", async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body || {};
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ error: "Email, code, and new password are required." });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters." });
+    }
+
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+    if (!user || !user.resetOtpHash || !user.resetOtpExpires) {
+      return res.status(400).json({ error: "Invalid or expired code. Please request a new one." });
+    }
+    if (user.resetOtpExpires.getTime() < Date.now()) {
+      user.resetOtpHash = null;
+      user.resetOtpExpires = null;
+      await user.save();
+      return res.status(400).json({ error: "This code has expired. Please request a new one." });
+    }
+    if (user.resetOtpAttempts >= 5) {
+      user.resetOtpHash = null;
+      user.resetOtpExpires = null;
+      await user.save();
+      return res.status(429).json({ error: "Too many incorrect attempts. Please request a new code." });
+    }
+
+    if (hashOtp(otp) !== user.resetOtpHash) {
+      user.resetOtpAttempts += 1;
+      await user.save();
+      return res.status(400).json({ error: "Incorrect code. Please try again." });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.resetOtpHash = null;
+    user.resetOtpExpires = null;
+    user.resetOtpAttempts = 0;
+    user.refreshTokenHash = null; // force re-login everywhere after a password reset
+    await user.save();
+
+    res.json({ success: true, message: "Password reset successfully." });
   } catch (err) { next(err); }
 });
 

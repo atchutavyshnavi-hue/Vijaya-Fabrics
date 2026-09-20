@@ -1,6 +1,7 @@
 /* Shared across index.html, catalog.html, cart.html, checkout.html, profile.html */
 
 let __vfPendingAfterLogin = null;
+let __vfResetEmail = null;
 
 function openAuthModal(mode = "login") {
   const backdrop = document.getElementById("authModalBackdrop");
@@ -122,6 +123,61 @@ async function vfInitAuth() {
         await onAuthSuccess();
       } catch (err) {
         errorEl.textContent = err.message || "Sign up failed.";
+        errorEl.classList.add("show");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  const forgotForm = document.getElementById("forgotForm");
+  if (forgotForm) {
+    forgotForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById("authError");
+      errorEl.classList.remove("show");
+      const btn = forgotForm.querySelector("button[type=submit]");
+      btn.disabled = true;
+      const email = document.getElementById("forgotEmail").value.trim();
+      try {
+        await api.customer.forgotPassword(email);
+        __vfResetEmail = email;
+        const label = document.getElementById("resetEmailLabel");
+        if (label) label.textContent = email;
+        vfToast("If that email is registered, a code has been sent.");
+        setAuthTab("reset");
+      } catch (err) {
+        errorEl.textContent = err.message || "Could not send reset code.";
+        errorEl.classList.add("show");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  const resetForm = document.getElementById("resetForm");
+  if (resetForm) {
+    resetForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById("authError");
+      errorEl.classList.remove("show");
+      const newPassword = document.getElementById("resetNewPassword").value;
+      const confirmPassword = document.getElementById("resetConfirmPassword").value;
+      if (newPassword !== confirmPassword) {
+        errorEl.textContent = "Passwords do not match.";
+        errorEl.classList.add("show");
+        return;
+      }
+      const btn = resetForm.querySelector("button[type=submit]");
+      btn.disabled = true;
+      try {
+        const otp = document.getElementById("resetOtp").value.trim();
+        await api.customer.resetPassword({ email: __vfResetEmail, otp, newPassword });
+        vfToast("Password reset successfully. Please log in.");
+        resetForm.reset();
+        setAuthTab("login");
+      } catch (err) {
+        errorEl.textContent = err.message || "Could not reset password.";
         errorEl.classList.add("show");
       } finally {
         btn.disabled = false;

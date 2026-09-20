@@ -201,6 +201,7 @@
         </div>
         <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Log In</button>
         <p class="auth-switch">New here? <a href="#" onclick="setAuthTab('signup'); return false;">Create an account</a></p>
+        <p class="auth-switch"><a href="#" onclick="setAuthTab('forgot'); return false;">Forgot password?</a></p>
       </form>
 
       <form class="auth-panel" data-mode="signup" id="signupForm" style="display:none;">
@@ -222,6 +223,34 @@
         </div>
         <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Create Account</button>
         <p class="auth-switch">Already have an account? <a href="#" onclick="setAuthTab('login'); return false;">Log in</a></p>
+      </form>
+
+      <form class="auth-panel" data-mode="forgot" id="forgotForm" style="display:none;">
+        <p style="margin-bottom:1em; font-size:.85rem; color:var(--charcoal-soft);">Enter your account email and we'll send a 6-digit code to reset your password.</p>
+        <div class="form-field">
+          <label for="forgotEmail">Email</label>
+          <input type="email" id="forgotEmail" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Send Code</button>
+        <p class="auth-switch">Remembered it? <a href="#" onclick="setAuthTab('login'); return false;">Back to login</a></p>
+      </form>
+
+      <form class="auth-panel" data-mode="reset" id="resetForm" style="display:none;">
+        <p style="margin-bottom:1em; font-size:.85rem; color:var(--charcoal-soft);">Enter the 6-digit code sent to <strong id="resetEmailLabel"></strong> and choose a new password.</p>
+        <div class="form-field">
+          <label for="resetOtp">6-digit code</label>
+          <input type="text" id="resetOtp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+        </div>
+        <div class="form-field">
+          <label for="resetNewPassword">New Password</label>
+          <input type="password" id="resetNewPassword" required minlength="6">
+        </div>
+        <div class="form-field">
+          <label for="resetConfirmPassword">Confirm New Password</label>
+          <input type="password" id="resetConfirmPassword" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Reset Password</button>
+        <p class="auth-switch"><a href="#" onclick="setAuthTab('forgot'); return false;">Didn't get a code? Resend</a> &middot; <a href="#" onclick="setAuthTab('login'); return false;">Back to login</a></p>
       </form>
     </div>
   </div>

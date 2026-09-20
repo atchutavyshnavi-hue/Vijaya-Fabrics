@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Catalog — Vijaya Fabrics</title>
-<meta name="description" content="Browse silk, cotton, fancy, handloom and pattu sarees, and Punjabi dress materials from Vijaya Fabrics, Chirala.">
+<title>Checkout — Vijaya Fabrics</title>
+<meta name="description" content="Complete your order with Vijaya Fabrics, Chirala.">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -34,22 +34,99 @@
 <section style="padding-bottom:0;">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Full Catalog</span>
-      <h1 style="font-size:clamp(2rem,4vw,2.8rem);">Every saree, sorted by weave</h1>
-      <p>Tap a category, then a subtype, to narrow things down. Tap any saree for full details and to enquire.</p>
+      <span class="eyebrow">Almost There</span>
+      <h1 style="font-size:clamp(2rem,4vw,2.8rem);">Checkout</h1>
+      <p>Confirm where this order should go, then place it — our team will call to confirm before dispatch.</p>
     </div>
-    <div class="filters" id="catFilters"></div>
-    <div class="subfilters" id="subFilters"></div>
   </div>
 </section>
 
 <section style="padding-top:0;">
   <div class="container">
-    <div class="loading-state" id="loadingState">Loading catalog…</div>
-    <div class="product-grid" id="productGrid"></div>
+    <div class="loading-state" id="loadingState">Loading checkout…</div>
+
     <div class="empty-state" id="emptyState" style="display:none;">
-      <h3>No sarees match this filter yet</h3>
-      <p>Try another category, or message us on WhatsApp — we may have it in the shop even if it's not listed here.</p>
+      <h3 id="emptyTitle">Your cart is empty</h3>
+      <p id="emptyText">Add a few sarees to your cart before checking out.</p>
+      <a href="catalog.html" class="btn btn-primary" style="margin-top:1em;" id="emptyCta">Browse the Catalog</a>
+    </div>
+
+    <div class="cart-layout" id="checkoutLayout" style="display:none;">
+      <div>
+        <div class="admin-card" style="margin-bottom:20px;">
+          <h3 style="margin-top:0;">Deliver To</h3>
+          <div id="addressList"></div>
+
+          <div id="addAddressToggle">
+            <button type="button" class="btn btn-outline btn-sm" id="showAddAddressBtn">+ Add a new address</button>
+          </div>
+
+          <form id="addAddressForm" style="display:none; margin-top:1.2em;">
+            <div class="form-field">
+              <label for="caLabel">Label</label>
+              <input type="text" id="caLabel" placeholder="e.g. Home, Office" value="Home">
+            </div>
+            <div class="form-field">
+              <label for="caLine1">Address Line 1</label>
+              <input type="text" id="caLine1" required>
+            </div>
+            <div class="form-field">
+              <label for="caLine2">Address Line 2 (optional)</label>
+              <input type="text" id="caLine2">
+            </div>
+            <div class="form-field">
+              <label for="caCity">City</label>
+              <input type="text" id="caCity" required>
+            </div>
+            <div class="form-field">
+              <label for="caState">State</label>
+              <input type="text" id="caState" required value="Andhra Pradesh">
+            </div>
+            <div class="form-field">
+              <label for="caPincode">PIN Code</label>
+              <input type="text" id="caPincode" required pattern="\d{6}" maxlength="6" placeholder="6-digit PIN">
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button type="submit" class="btn btn-primary btn-sm">Save Address</button>
+              <button type="button" class="btn btn-outline btn-sm" id="cancelAddAddress">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="margin-top:0;">Recipient Details</h3>
+          <div class="form-field">
+            <label for="recName">Full Name</label>
+            <input type="text" id="recName" required>
+          </div>
+          <div class="form-field">
+            <label for="recPhone">Phone (for delivery updates)</label>
+            <input type="tel" id="recPhone" required minlength="10">
+          </div>
+          <div class="form-field">
+            <label>Payment Method</label>
+            <select id="paymentMethod">
+              <option value="Cash on Delivery">Cash on Delivery</option>
+            </select>
+            <p style="font-size:.78rem; color:var(--charcoal-soft); margin-top:.5em;">Online payment is coming soon — every order today ships Cash on Delivery.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <h3 style="margin-top:0;">Order Summary</h3>
+        <div id="summaryLines"></div>
+        <div class="summary-row total"><span>Total</span><span id="summaryTotal">₹0</span></div>
+        <button class="btn btn-primary" id="placeOrderBtn" style="width:100%; justify-content:center; margin-top:1.2em;">Place Order</button>
+        <p class="auth-error" id="checkoutError" style="display:none;"></p>
+      </div>
+    </div>
+
+    <div class="empty-state" id="successState" style="display:none;">
+      <h3>Order placed! 🎉</h3>
+      <p id="successText"></p>
+      <a href="profile.html?tab=orders" class="btn btn-primary" style="margin-top:1em;">Track Your Order</a>
+      <a href="catalog.html" class="btn btn-outline" style="margin-top:1em; margin-left:10px;">Keep Browsing</a>
     </div>
   </div>
 </section>
@@ -70,8 +147,8 @@
     <div>
       <h4>Contact</h4>
       <a href="index.html#contact">Main Bazaar Road, Chirala, AP</a>
-      <a href="tel:+919966145345">+91 99661 45345</a>
-      <a href="https://wa.me/+91 99661 45345" target="_blank" rel="noopener">WhatsApp Us</a>
+      <a href="tel:+919999999999">+91 99999 99999</a>
+      <a href="https://wa.me/919999999999" target="_blank" rel="noopener">WhatsApp Us</a>
     </div>
   </div>
   <div class="container footer-bottom">
@@ -80,11 +157,7 @@
   </div>
 </footer>
 
-<a class="whatsapp-float" href="https://wa.me/919966145345" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">💬</a>
-
-<div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal" id="modalContent"></div>
-</div>
+<a class="whatsapp-float" href="https://wa.me/919999999999" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">💬</a>
 
 <div class="modal-backdrop" id="authModalBackdrop">
   <div class="modal auth-modal">
@@ -107,6 +180,7 @@
         </div>
         <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Log In</button>
         <p class="auth-switch">New here? <a href="#" onclick="setAuthTab('signup'); return false;">Create an account</a></p>
+        <p class="auth-switch"><a href="#" onclick="setAuthTab('forgot'); return false;">Forgot password?</a></p>
       </form>
 
       <form class="auth-panel" data-mode="signup" id="signupForm" style="display:none;">
@@ -129,6 +203,34 @@
         <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Create Account</button>
         <p class="auth-switch">Already have an account? <a href="#" onclick="setAuthTab('login'); return false;">Log in</a></p>
       </form>
+
+      <form class="auth-panel" data-mode="forgot" id="forgotForm" style="display:none;">
+        <p style="margin-bottom:1em; font-size:.85rem; color:var(--charcoal-soft);">Enter your account email and we'll send a 6-digit code to reset your password.</p>
+        <div class="form-field">
+          <label for="forgotEmail">Email</label>
+          <input type="email" id="forgotEmail" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Send Code</button>
+        <p class="auth-switch">Remembered it? <a href="#" onclick="setAuthTab('login'); return false;">Back to login</a></p>
+      </form>
+
+      <form class="auth-panel" data-mode="reset" id="resetForm" style="display:none;">
+        <p style="margin-bottom:1em; font-size:.85rem; color:var(--charcoal-soft);">Enter the 6-digit code sent to <strong id="resetEmailLabel"></strong> and choose a new password.</p>
+        <div class="form-field">
+          <label for="resetOtp">6-digit code</label>
+          <input type="text" id="resetOtp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+        </div>
+        <div class="form-field">
+          <label for="resetNewPassword">New Password</label>
+          <input type="password" id="resetNewPassword" required minlength="6">
+        </div>
+        <div class="form-field">
+          <label for="resetConfirmPassword">Confirm New Password</label>
+          <input type="password" id="resetConfirmPassword" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Reset Password</button>
+        <p class="auth-switch"><a href="#" onclick="setAuthTab('forgot'); return false;">Didn't get a code? Resend</a> &middot; <a href="#" onclick="setAuthTab('login'); return false;">Back to login</a></p>
+      </form>
     </div>
   </div>
 </div>
@@ -136,6 +238,6 @@
 <script src="js/common.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/catalog.js"></script>
+<script src="js/checkout.js"></script>
 </body>
 </html>

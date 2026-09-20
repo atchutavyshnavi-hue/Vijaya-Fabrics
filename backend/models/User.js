@@ -22,7 +22,13 @@ const userSchema = new mongoose.Schema(
     addresses: [addressSchema],
     // hash of the currently-valid refresh token; rotated on every /refresh call.
     // Wiping this (on logout) immediately invalidates any outstanding refresh token.
-    refreshTokenHash: { type: String, default: null }
+    refreshTokenHash: { type: String, default: null },
+    // Forgot-password OTP — never store the OTP itself, only its hash, and it's
+    // wiped after use or expiry so it can never be replayed.
+    resetOtpHash: { type: String, default: null },
+    resetOtpExpires: { type: Date, default: null },
+    resetOtpAttempts: { type: Number, default: 0 },
+    resetOtpLastSentAt: { type: Date, default: null }
   },
   { timestamps: true }
 );
@@ -34,6 +40,10 @@ userSchema.set("toJSON", {
     delete ret.__v;
     delete ret.passwordHash;
     delete ret.refreshTokenHash;
+    delete ret.resetOtpHash;
+    delete ret.resetOtpExpires;
+    delete ret.resetOtpAttempts;
+    delete ret.resetOtpLastSentAt;
     if (Array.isArray(ret.addresses)) {
       ret.addresses = ret.addresses.map((a) => {
         const addr = { ...a, id: a._id ? a._id.toString() : a.id };

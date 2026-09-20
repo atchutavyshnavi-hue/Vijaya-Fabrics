@@ -18,13 +18,17 @@ document.getElementById("loginBtn").addEventListener("click", attemptLogin);
 document.getElementById("adminPass").addEventListener("keydown", (e) => {
   if (e.key === "Enter") attemptLogin();
 });
+document.getElementById("adminEmail").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") attemptLogin();
+});
 
 async function attemptLogin() {
+  const email = document.getElementById("adminEmail").value.trim();
   const val = document.getElementById("adminPass").value;
   const errorEl = document.getElementById("loginError");
   errorEl.style.display = "none";
   try {
-    await api.login(val);
+    await api.login(email, val);
     showPanel();
   } catch (err) {
     errorEl.textContent = err.message || "Login failed.";
@@ -35,6 +39,33 @@ async function attemptLogin() {
 document.getElementById("logoutBtn")?.addEventListener("click", () => {
   api.clearToken();
   showLogin();
+});
+
+document.getElementById("changePassBtn")?.addEventListener("click", () => {
+  const card = document.getElementById("changePassCard");
+  card.style.display = card.style.display === "none" ? "block" : "none";
+});
+document.getElementById("cpCancel")?.addEventListener("click", () => {
+  document.getElementById("changePassCard").style.display = "none";
+  document.getElementById("changePassForm").reset();
+});
+document.getElementById("changePassForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector("button[type=submit]");
+  btn.disabled = true;
+  try {
+    await api.changeAdminPassword({
+      currentPassword: document.getElementById("cpCurrent").value,
+      newPassword: document.getElementById("cpNew").value
+    });
+    vfToast("Password updated");
+    document.getElementById("changePassForm").reset();
+    document.getElementById("changePassCard").style.display = "none";
+  } catch (err) {
+    vfToast(err.message || "Could not change password.", true);
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 async function initAdminPanel() {
@@ -138,7 +169,7 @@ function resetForm() {
 async function renderTable() {
   let list = [];
   try {
-    list = await api.getSarees();
+    list = await api.adminGetSarees();
   } catch (err) {
     vfToast("Could not load the catalog.", true);
     return;

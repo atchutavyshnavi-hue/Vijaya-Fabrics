@@ -23,33 +23,46 @@ const api = {
     return res.json();
   },
 
+  // Always anonymous — the customer-facing catalog/product pages must NEVER
+  // see admin-shaped (unmasked stock) data, even if an admin happens to be
+  // logged in on this same browser tab. Use adminGetSarees() below for the
+  // admin panel instead of adding a token here.
   async getSarees({ category, subtype } = {}) {
     const params = new URLSearchParams();
     if (category && category !== "all") params.set("category", category);
     if (subtype && subtype !== "all") params.set("subtype", subtype);
     const qs = params.toString();
-    const token = this.getToken();
-    const res = await fetch(`${this.base}/sarees${qs ? "?" + qs : ""}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
+    const res = await fetch(`${this.base}/sarees${qs ? "?" + qs : ""}`);
     if (!res.ok) throw new Error("Could not load the catalog.");
     return res.json();
   },
 
   async getSaree(id) {
-    const token = this.getToken();
-    const res = await fetch(`${this.base}/sarees/${id}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
+    const res = await fetch(`${this.base}/sarees/${id}`);
     if (!res.ok) throw new Error("Saree not found.");
     return res.json();
   },
 
-  async login(password) {
+  // Admin-only variant that deliberately attaches the admin token, so the
+  // admin panel's table sees real stock numbers. Never used by
+  // customer-facing pages.
+  async adminGetSarees({ category, subtype } = {}) {
+    const params = new URLSearchParams();
+    if (category && category !== "all") params.set("category", category);
+    if (subtype && subtype !== "all") params.set("subtype", subtype);
+    const qs = params.toString();
+    const res = await fetch(`${this.base}/sarees${qs ? "?" + qs : ""}`, {
+      headers: { Authorization: `Bearer ${this.getToken()}` }
+    });
+    if (!res.ok) throw new Error("Could not load the catalog.");
+    return res.json();
+  },
+
+  async login(email, password) {
     const res = await fetch(`${this.base}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password })
+      body: JSON.stringify({ email, password })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Login failed.");
@@ -83,6 +96,17 @@ const api = {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Delete failed.");
+    return data;
+  },
+
+  async changeAdminPassword({ currentPassword, newPassword }) {
+    const res = await fetch(`${this.base}/auth/change-password`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.getToken()}` },
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Could not change password.");
     return data;
   },
 
@@ -209,6 +233,30 @@ const api = {
       } catch (err) { /* ignore network errors on logout */ }
       this._accessToken = null;
       this._user = null;
+    },
+
+    // These two run before the customer is logged in, so they don't go
+    // through this.request() (no access token to attach yet).
+    async forgotPassword(email) {
+      const res = await fetch(`${api.base}/auth/customer/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not send reset code.");
+      return data;
+    },
+
+    async resetPassword({ email, otp, newPassword }) {
+      const res = await fetch(`${api.base}/auth/customer/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp, newPassword })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not reset password.");
+      return data;
     },
 
     async updateProfile({ name, phone }) {

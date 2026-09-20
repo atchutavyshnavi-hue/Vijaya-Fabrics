@@ -3,8 +3,10 @@ const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
 
 const { connectMongo } = require("./utils/mongo");
+const Admin = require("./models/admin");
 
 const authRoutes = require("./routes/auth");
 const customerAuthRoutes = require("./routes/customerAuth");
@@ -45,8 +47,34 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || "Something went wrong." });
 });
 
+// Creates the very first admin account from env vars if none exists yet.
+// Safe to run on every startup — it's a no-op once an Admin document exists.
+// This is what lets ADMIN_PASSWORD keep working exactly as before, just now
+// backed by a real, hashed, database-stored account instead of a live
+// plaintext comparison against process.env on every login.
+async function ensureAdminSeeded() {
+  const count = await Admin.countDocuments();
+  if (count > 0) return;
+
+  const email = (process.env.ADMIN_EMAIL || "admin@vijayafabrics.com").toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) {
+    console.warn(
+      "[Vijaya Fabrics] No admin account exists yet and ADMIN_PASSWORD is not set. " +
+      "Set ADMIN_PASSWORD (and optionally ADMIN_EMAIL) in your environment and restart " +
+      "the server to create the first admin account."
+    );
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  await Admin.create({ email, passwordHash, name: "Admin" });
+  console.log(`[Vijaya Fabrics] Created initial admin account: ${email}`);
+}
+
 connectMongo()
-  .then(() => {
+  .then(async () => {
+    await ensureAdminSeeded();
     app.listen(PORT, () => {
       console.log(`Vijaya Fabrics server running at http://localhost:${PORT}`);
     });
