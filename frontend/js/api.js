@@ -377,6 +377,9 @@ const api = {
     },
     async get(id) {
       return api.customer.request(`${api.base}/orders/${id}`);
+    },
+    async cancel(id) {
+      return api.customer.request(`${api.base}/orders/${id}/cancel`, { method: "POST" });
     }
   },
 

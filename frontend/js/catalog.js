@@ -2,13 +2,22 @@ const state = {
   category: "all",
   subtype: "all",
   categories: [],
-  allSarees: []
+  allSarees: [],
+  search: "",
+  sort: "default",
+  priceMin: null,
+  priceMax: null,
+  colours: [],
+  materials: [],
+  inStockOnly: false
 };
 
 function initFromUrl() {
   const params = new URLSearchParams(location.search);
   const cat = params.get("cat");
   if (cat) state.category = cat;
+  const q = params.get("q");
+  if (q) state.search = q;
 }
 
 function renderCatFilters() {
@@ -24,6 +33,7 @@ function renderCatFilters() {
       state.subtype = "all";
       renderCatFilters();
       renderSubFilters();
+      renderBreadcrumbs();
       renderGrid();
     });
   });
@@ -43,21 +53,149 @@ function renderSubFilters() {
     btn.addEventListener("click", () => {
       state.subtype = btn.dataset.sub;
       renderSubFilters();
+      renderBreadcrumbs();
       renderGrid();
     });
   });
+}
+
+/* ---------- Breadcrumbs ---------- */
+function renderBreadcrumbs() {
+  const wrap = document.getElementById("breadcrumbs");
+  if (!wrap) return;
+  const parts = [`<a href="index.html">Home</a>`, `<span class="crumb-sep">/</span>`];
+  if (state.category === "all") {
+    parts.push(`<span class="crumb-current">Catalog</span>`);
+  } else {
+    const cat = getCategoryFrom(state.categories, state.category);
+    const label = cat ? cat.label : state.category;
+    if (state.subtype === "all") {
+      parts.push(`<a href="catalog.html">Catalog</a>`, `<span class="crumb-sep">/</span>`, `<span class="crumb-current">${label}</span>`);
+    } else {
+      parts.push(
+        `<a href="catalog.html">Catalog</a>`, `<span class="crumb-sep">/</span>`,
+        `<a href="catalog.html?cat=${state.category}">${label}</a>`, `<span class="crumb-sep">/</span>`,
+        `<span class="crumb-current">${state.subtype}</span>`
+      );
+    }
+  }
+  wrap.innerHTML = parts.join(" ");
+}
+
+/* ---------- Search, filters & sort ---------- */
+function populateFilterOptions() {
+  const colours = new Set();
+  const materials = new Set();
+  state.allSarees.forEach(p => {
+    (p.colours || []).forEach(c => colours.add(c));
+    if (p.fabric) materials.add(p.fabric);
+  });
+
+  const colourWrap = document.getElementById("colourFilters");
+  colourWrap.innerHTML = [...colours].sort().map(c => `
+    <button type="button" class="filter-chip ${state.colours.includes(c) ? "active" : ""}" data-colour="${c}">${c}</button>
+  `).join("") || `<span style="font-size:.78rem; color:var(--charcoal-soft);">None listed</span>`;
+  colourWrap.querySelectorAll("[data-colour]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      toggleInArray(state.colours, btn.dataset.colour);
+      btn.classList.toggle("active");
+      renderGrid();
+    });
+  });
+
+  const materialWrap = document.getElementById("materialFilters");
+  materialWrap.innerHTML = [...materials].sort().map(m => `
+    <button type="button" class="filter-chip ${state.materials.includes(m) ? "active" : ""}" data-material="${m}">${m}</button>
+  `).join("") || `<span style="font-size:.78rem; color:var(--charcoal-soft);">None listed</span>`;
+  materialWrap.querySelectorAll("[data-material]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      toggleInArray(state.materials, btn.dataset.material);
+      btn.classList.toggle("active");
+      renderGrid();
+    });
+  });
+}
+
+function toggleInArray(arr, value) {
+  const i = arr.indexOf(value);
+  if (i === -1) arr.push(value); else arr.splice(i, 1);
+}
+
+function matchesSearch(p, q) {
+  if (!q) return true;
+  const needle = q.toLowerCase();
+  const cat = getCategoryFrom(state.categories, p.category);
+  const haystack = [
+    p.name, p.category, cat ? cat.label : "", p.subtype, p.fabric,
+    ...(p.colours || [])
+  ].join(" ").toLowerCase();
+  return haystack.includes(needle);
+}
+
+function applyFiltersAndSort(list) {
+  let out = list.filter(p => {
+    if (!matchesSearch(p, state.search)) return false;
+    if (state.priceMin !== null && p.price < state.priceMin) return false;
+    if (state.priceMax !== null && p.price > state.priceMax) return false;
+    if (state.colours.length && !(p.colours || []).some(c => state.colours.includes(c))) return false;
+    if (state.materials.length && !state.materials.includes(p.fabric)) return false;
+    if (state.inStockOnly && p.inStock === false) return false;
+    return true;
+  });
+
+  switch (state.sort) {
+    case "price-asc": out = [...out].sort((a, b) => a.price - b.price); break;
+    case "price-desc": out = [...out].sort((a, b) => b.price - a.price); break;
+    case "newest": out = [...out].reverse(); break;
+    case "popular": out = [...out].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break;
+    default: break; // "Featured" — keep catalog order
+  }
+  return out;
+}
+
+function hasActiveFilters() {
+  return !!state.search || state.priceMin !== null || state.priceMax !== null ||
+    state.colours.length > 0 || state.materials.length > 0 || state.inStockOnly ||
+    state.sort !== "default";
+}
+
+function clearAllFilters() {
+  state.search = "";
+  state.priceMin = null;
+  state.priceMax = null;
+  state.colours = [];
+  state.materials = [];
+  state.inStockOnly = false;
+  state.sort = "default";
+  document.getElementById("searchInput").value = "";
+  document.getElementById("priceMin").value = "";
+  document.getElementById("priceMax").value = "";
+  document.getElementById("inStockOnly").checked = false;
+  document.getElementById("sortSelect").value = "default";
+  populateFilterOptions();
+  renderGrid();
 }
 
 function renderGrid() {
   let list = state.allSarees;
   if (state.category !== "all") list = list.filter(p => p.category === state.category);
   if (state.subtype !== "all") list = list.filter(p => p.subtype === state.subtype);
+  list = applyFiltersAndSort(list);
 
   const grid = document.getElementById("productGrid");
   const empty = document.getElementById("emptyState");
   if (!list.length) {
     grid.innerHTML = "";
     empty.style.display = "block";
+    const emptyHeading = empty.querySelector("h3");
+    const emptyBtn = document.getElementById("emptyClearFiltersBtn");
+    if (hasActiveFilters()) {
+      if (emptyHeading) emptyHeading.textContent = "No results match your search";
+      if (emptyBtn) emptyBtn.style.display = "inline-flex";
+    } else {
+      if (emptyHeading) emptyHeading.textContent = "No sarees match this filter yet";
+      if (emptyBtn) emptyBtn.style.display = "none";
+    }
     return;
   }
   empty.style.display = "none";
@@ -72,6 +210,38 @@ function renderGrid() {
     });
   });
 }
+
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  state.search = e.target.value.trim();
+  renderGrid();
+});
+
+document.getElementById("sortSelect").addEventListener("change", (e) => {
+  state.sort = e.target.value;
+  renderGrid();
+});
+
+document.getElementById("toggleFiltersBtn").addEventListener("click", (e) => {
+  const panel = document.getElementById("filterPanel");
+  const open = panel.style.display !== "none";
+  panel.style.display = open ? "none" : "flex";
+  e.target.setAttribute("aria-expanded", String(!open));
+});
+
+document.getElementById("priceMin").addEventListener("change", (e) => {
+  state.priceMin = e.target.value === "" ? null : Number(e.target.value);
+  renderGrid();
+});
+document.getElementById("priceMax").addEventListener("change", (e) => {
+  state.priceMax = e.target.value === "" ? null : Number(e.target.value);
+  renderGrid();
+});
+document.getElementById("inStockOnly").addEventListener("change", (e) => {
+  state.inStockOnly = e.target.checked;
+  renderGrid();
+});
+document.getElementById("clearFiltersBtn").addEventListener("click", clearAllFilters);
+document.getElementById("emptyClearFiltersBtn").addEventListener("click", clearAllFilters);
 
 function cardHtml(p) {
   const outOfStock = p.inStock === false;
@@ -97,7 +267,7 @@ async function quickAddToCart(sareeId) {
     try {
       await api.cart.add(sareeId, 1);
       await updateCartBadge();
-      vfToast("Added to cart");
+      vfCartToast("Added to cart");
     } catch (err) {
       vfToast(err.message || "Could not add to cart.", true);
     }
@@ -256,14 +426,18 @@ async function init() {
     state.allSarees = sarees;
     document.getElementById("loadingState").style.display = "none";
 
+    if (state.search) document.getElementById("searchInput").value = state.search;
+
     renderCatFilters();
     renderSubFilters();
+    renderBreadcrumbs();
+    populateFilterOptions();
     renderGrid();
 
     const productParam = new URLSearchParams(location.search).get("product");
     if (productParam) openModal(productParam);
   } catch (err) {
-    document.getElementById("loadingState").textContent = err.message || "Could not load the catalog. Please refresh.";
+    document.getElementById("loadingState").textContent = "Something went wrong loading the catalog. Please refresh.";
   }
 }
 

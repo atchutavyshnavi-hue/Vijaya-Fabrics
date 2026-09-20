@@ -33,11 +33,50 @@
 
 <section style="padding-bottom:0;">
   <div class="container">
+    <nav class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumb"></nav>
     <div class="section-head">
       <span class="eyebrow">Full Catalog</span>
       <h1 style="font-size:clamp(2rem,4vw,2.8rem);">Every saree, sorted by weave</h1>
       <p>Tap a category, then a subtype, to narrow things down. Tap any saree for full details and to enquire.</p>
     </div>
+
+    <div class="search-sort-row">
+      <div class="search-box">
+        <input type="search" id="searchInput" placeholder="Search by name, category, colour or material…" aria-label="Search sarees">
+      </div>
+      <select id="sortSelect" aria-label="Sort by">
+        <option value="default">Sort: Featured</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="newest">Newest First</option>
+        <option value="popular">Popular</option>
+      </select>
+      <button class="btn btn-outline btn-sm" id="toggleFiltersBtn" type="button" aria-expanded="false">Filters</button>
+    </div>
+
+    <div class="filter-panel" id="filterPanel" style="display:none;">
+      <div class="filter-group">
+        <label>Price Range</label>
+        <div class="filter-price-row">
+          <input type="number" id="priceMin" placeholder="Min ₹" min="0">
+          <span>–</span>
+          <input type="number" id="priceMax" placeholder="Max ₹" min="0">
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Colour</label>
+        <div class="filter-chip-wrap" id="colourFilters"></div>
+      </div>
+      <div class="filter-group">
+        <label>Material</label>
+        <div class="filter-chip-wrap" id="materialFilters"></div>
+      </div>
+      <div class="filter-group">
+        <label><input type="checkbox" id="inStockOnly" style="width:auto; margin-right:6px;">In stock only</label>
+      </div>
+      <button class="btn btn-outline btn-sm" id="clearFiltersBtn" type="button">Clear All Filters</button>
+    </div>
+
     <div class="filters" id="catFilters"></div>
     <div class="subfilters" id="subFilters"></div>
   </div>
@@ -50,6 +89,7 @@
     <div class="empty-state" id="emptyState" style="display:none;">
       <h3>No sarees match this filter yet</h3>
       <p>Try another category, or message us on WhatsApp — we may have it in the shop even if it's not listed here.</p>
+      <button class="btn btn-outline btn-sm" id="emptyClearFiltersBtn" type="button" style="margin-top:1em;">Clear All Filters</button>
     </div>
   </div>
 </section>

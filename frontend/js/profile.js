@@ -188,6 +188,8 @@ function statusClass(status) {
   return status.toLowerCase().replace(/\s+/g, "-");
 }
 
+const CUSTOMER_CANCELLABLE_STATUSES = ["Received", "Processing", "Packed"];
+
 function orderCardHtml(order) {
   const date = new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
   const stepsHtml = order.orderStatus === "Cancelled"
@@ -198,6 +200,7 @@ function orderCardHtml(order) {
           return `<div class="tracker-step ${i <= idx ? "done" : ""}"><span class="dot"></span><span>${step}</span></div>`;
         }).join("")}
       </div>`;
+  const canCancel = CUSTOMER_CANCELLABLE_STATUSES.includes(order.orderStatus);
 
   return `
     <div class="order-card">
@@ -218,10 +221,22 @@ function orderCardHtml(order) {
       <p style="font-size:.8rem; color:var(--charcoal-soft); margin-top:1em; margin-bottom:0;">
         Shipping to ${order.shippingAddress.name}, ${order.shippingAddress.line1}, ${order.shippingAddress.city} — ${order.shippingAddress.pincode} · Payment: ${order.paymentMethod} (${order.paymentStatus})
       </p>
+      ${canCancel ? `<button type="button" class="btn btn-outline btn-sm" data-cancel-order="${order.id}" style="margin-top:1em;">Cancel Order</button>` : ""}
     </div>`;
 }
 
 const ORDER_STEPS = ["Received", "Processing", "Packed", "Shipped", "Out for Delivery", "Delivered"];
+
+async function cancelOrder(orderId) {
+  if (!confirm("Cancel this order? This can't be undone.")) return;
+  try {
+    await api.orders.cancel(orderId);
+    vfToast("Order cancelled");
+    await renderOrders();
+  } catch (err) {
+    vfToast(err.message || "Could not cancel this order.", true);
+  }
+}
 
 async function renderOrders() {
   const listEl = document.getElementById("ordersList");
@@ -235,6 +250,9 @@ async function renderOrders() {
     }
     emptyEl.style.display = "none";
     listEl.innerHTML = orders.map(orderCardHtml).join("");
+    listEl.querySelectorAll("[data-cancel-order]").forEach((btn) => {
+      btn.addEventListener("click", () => cancelOrder(btn.dataset.cancelOrder));
+    });
   } catch (err) {
     vfToast(err.message || "Could not load your orders.", true);
   }

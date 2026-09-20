@@ -65,6 +65,7 @@ async function changeQty(sareeId, delta) {
 }
 
 async function removeLine(sareeId) {
+  if (!confirm("Remove this item from your cart?")) return;
   try {
     cartData = await api.cart.remove(sareeId);
     renderCart();

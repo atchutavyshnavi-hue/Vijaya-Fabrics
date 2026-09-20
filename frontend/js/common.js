@@ -34,3 +34,26 @@ function vfToast(msg, isError = false) {
 function formatINR(num) {
   return "₹" + Number(num).toLocaleString("en-IN");
 }
+
+// A richer toast for "added to cart" — gives the customer an immediate next
+// step (view what they just added, or keep browsing) instead of leaving
+// them to guess. Falls back silently if the page doesn't have room for it.
+function vfCartToast(message) {
+  let t = document.querySelector(".toast-cart");
+  if (!t) {
+    t = document.createElement("div");
+    t.className = "toast-cart";
+    t.innerHTML = `
+      <span class="tc-msg">✓ <span class="tc-msg-text"></span></span>
+      <span class="tc-actions">
+        <a href="cart.html">View Cart</a>
+        <button type="button" class="tc-dismiss">Continue Shopping</button>
+      </span>`;
+    document.body.appendChild(t);
+    t.querySelector(".tc-dismiss").addEventListener("click", () => t.classList.remove("show"));
+  }
+  t.querySelector(".tc-msg-text").textContent = message;
+  t.classList.add("show");
+  clearTimeout(window.__vfCartToastTimer);
+  window.__vfCartToastTimer = setTimeout(() => t.classList.remove("show"), 4500);
+}

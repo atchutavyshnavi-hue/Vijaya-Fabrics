@@ -49,10 +49,29 @@ app.use("/api/admin/crm", crmRoutes); // admin-only CRM analytics dashboard
 const frontendDir = path.join(__dirname, "..", "frontend");
 app.use(express.static(frontendDir));
 
-// Central error handler (e.g. multer file-size/type errors)
+// Central error handler. Every route that returns an intentional, customer-
+// facing message (validation, ownership checks, stock conflicts, etc.) does
+// so directly with res.status().json() and never reaches this handler — so
+// anything arriving here is an unexpected failure (a database error, a bug),
+// and its raw message must never reach the customer. Full detail still goes
+// to the server log for debugging; the response is always a friendly,
+// generic line, with two narrow exceptions for known, safe-to-show upload
+// errors from multer.
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(err.status || 500).json({ error: err.message || "Something went wrong." });
+
+  if (err && err.name === "MulterError") {
+    const message = err.code === "LIMIT_FILE_SIZE"
+      ? "That image is too large — please use a file under 4MB."
+      : "There was a problem with that file upload.";
+    return res.status(400).json({ error: message });
+  }
+  if (err && /only image files are allowed/i.test(err.message || "")) {
+    return res.status(400).json({ error: err.message });
+  }
+
+  const status = err.status && err.status < 500 ? err.status : 500;
+  res.status(status).json({ error: "Something went wrong. Please try again." });
 });
 
 // Creates the very first admin account from env vars if none exists yet.

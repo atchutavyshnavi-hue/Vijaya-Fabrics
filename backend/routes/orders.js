@@ -6,6 +6,11 @@ const { requireCustomer } = require("../middleware/auth");
 
 const router = express.Router();
 
+// A customer can only self-cancel while an order is still early in its
+// lifecycle. Once it's shipped, out for delivery, delivered, or already
+// cancelled, only the admin panel can touch its status.
+const CUSTOMER_CANCELLABLE_STATUSES = ["Received", "Processing", "Packed"];
+
 function generateOrderNumber() {
   const ts = Date.now().toString(36).toUpperCase();
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -129,6 +134,35 @@ router.get("/:id", requireCustomer, async (req, res, next) => {
   try {
     const order = await Order.findOne({ _id: req.params.id, user: req.userId });
     if (!order) return res.status(404).json({ error: "Order not found." });
+    res.json(order.toJSON());
+  } catch (err) { next(err); }
+});
+
+// POST /api/orders/:id/cancel — customer self-cancel, early lifecycle only.
+// Restores every reserved piece back into inventory, same as an admin cancel.
+router.post("/:id/cancel", requireCustomer, async (req, res, next) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.userId });
+    if (!order) return res.status(404).json({ error: "Order not found." });
+
+    if (!CUSTOMER_CANCELLABLE_STATUSES.includes(order.orderStatus)) {
+      return res.status(400).json({
+        error: order.orderStatus === "Cancelled"
+          ? "This order is already cancelled."
+          : "This order has already shipped and can no longer be cancelled online — please contact us for help."
+      });
+    }
+
+    for (const item of order.items) {
+      if (item.saree) {
+        await Saree.findByIdAndUpdate(item.saree, { $inc: { stock: item.qty } });
+      }
+    }
+
+    order.orderStatus = "Cancelled";
+    order.statusHistory.push({ status: "Cancelled" });
+    await order.save();
+
     res.json(order.toJSON());
   } catch (err) { next(err); }
 });
