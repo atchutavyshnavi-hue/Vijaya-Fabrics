@@ -261,10 +261,10 @@ async function toggleWishlist(sareeId, btnEl) {
   });
 }
 
-document.getElementById("searchInput").addEventListener("input", (e) => {
+document.getElementById("searchInput").addEventListener("input", vfDebounce((e) => {
   state.search = e.target.value.trim();
   renderGrid();
-});
+}, 250));
 
 document.getElementById("sortSelect").addEventListener("change", (e) => {
   state.sort = e.target.value;
@@ -629,6 +629,10 @@ document.addEventListener("keydown", (e) => {
 
 async function init() {
   initFromUrl();
+  // Skeleton placeholders show immediately so the page has visible structure
+  // while the catalog loads, instead of a blank grid under a "Loading…" line.
+  document.getElementById("loadingState").style.display = "none";
+  document.getElementById("productGrid").innerHTML = vfSkeletonCards(8);
   try {
     // Explicitly resolved here (not just left to auth.js's own DOMContentLoaded
     // listener) so wishlist hearts render correctly filled-in on first paint
@@ -639,7 +643,6 @@ async function init() {
     state.categories = cats;
     state.allSarees = sarees;
     await loadWishlistIds();
-    document.getElementById("loadingState").style.display = "none";
 
     if (state.search) document.getElementById("searchInput").value = state.search;
 
@@ -653,7 +656,13 @@ async function init() {
     const productParam = new URLSearchParams(location.search).get("product");
     if (productParam) openModal(productParam);
   } catch (err) {
-    document.getElementById("loadingState").textContent = "Something went wrong loading the catalog. Please refresh.";
+    document.getElementById("productGrid").innerHTML = "";
+    const loadingState = document.getElementById("loadingState");
+    loadingState.style.display = "block";
+    loadingState.innerHTML = `
+      <p>${err.message || "Something went wrong loading the catalog."}</p>
+      <button class="btn btn-outline btn-sm" id="catalogRetryBtn" type="button">Try Again</button>`;
+    document.getElementById("catalogRetryBtn").addEventListener("click", init);
   }
 }
 

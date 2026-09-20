@@ -241,6 +241,8 @@ async function cancelOrder(orderId) {
 async function renderOrders() {
   const listEl = document.getElementById("ordersList");
   const emptyEl = document.getElementById("noOrdersState");
+  emptyEl.style.display = "none";
+  listEl.innerHTML = vfSkeletonRows(3);
   try {
     const orders = await api.orders.list();
     if (!orders.length) {
@@ -248,13 +250,17 @@ async function renderOrders() {
       emptyEl.style.display = "block";
       return;
     }
-    emptyEl.style.display = "none";
     listEl.innerHTML = orders.map(orderCardHtml).join("");
     listEl.querySelectorAll("[data-cancel-order]").forEach((btn) => {
       btn.addEventListener("click", () => cancelOrder(btn.dataset.cancelOrder));
     });
   } catch (err) {
-    vfToast(err.message || "Could not load your orders.", true);
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <p>${err.message || "Could not load your orders."}</p>
+        <button class="btn btn-outline btn-sm" id="ordersRetryBtn" type="button">Try Again</button>
+      </div>`;
+    document.getElementById("ordersRetryBtn").addEventListener("click", renderOrders);
   }
 }
 
@@ -282,6 +288,8 @@ function complaintCardHtml(c) {
 async function renderComplaints() {
   const listEl = document.getElementById("complaintsList");
   const emptyEl = document.getElementById("noComplaintsState");
+  emptyEl.style.display = "none";
+  listEl.innerHTML = vfSkeletonRows(2);
   try {
     const complaints = await api.complaints.list();
     if (!complaints.length) {
@@ -289,10 +297,14 @@ async function renderComplaints() {
       emptyEl.style.display = "block";
       return;
     }
-    emptyEl.style.display = "none";
     listEl.innerHTML = complaints.map(complaintCardHtml).join("");
   } catch (err) {
-    vfToast(err.message || "Could not load your complaints.", true);
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <p>${err.message || "Could not load your complaints."}</p>
+        <button class="btn btn-outline btn-sm" id="complaintsRetryBtn" type="button">Try Again</button>
+      </div>`;
+    document.getElementById("complaintsRetryBtn").addEventListener("click", renderComplaints);
   }
 }
 

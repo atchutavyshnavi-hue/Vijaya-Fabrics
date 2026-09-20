@@ -94,12 +94,18 @@ async function initCartPage() {
     return;
   }
 
+  const loading = document.getElementById("loadingState");
   try {
-    document.getElementById("loadingState").style.display = "block";
+    loading.style.display = "block";
+    loading.innerHTML = vfSkeletonRows(3);
     cartData = await api.cart.get();
     renderCart();
   } catch (err) {
-    document.getElementById("loadingState").textContent = err.message || "Could not load your cart.";
+    loading.style.display = "block";
+    loading.innerHTML = `
+      <p>${err.message || "Could not load your cart."}</p>
+      <button class="btn btn-outline btn-sm" id="cartRetryBtn" type="button">Try Again</button>`;
+    document.getElementById("cartRetryBtn").addEventListener("click", initCartPage);
   }
 }
 

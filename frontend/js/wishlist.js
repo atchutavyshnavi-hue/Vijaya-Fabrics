@@ -87,12 +87,20 @@ async function initWishlistPage() {
     return;
   }
 
+  const loading = document.getElementById("loadingState");
+  loading.className = "loading-state product-grid";
+  loading.innerHTML = vfSkeletonCards(4);
   try {
     const data = await api.wishlist.get();
     wishlistItems = data.items;
     renderWishlist();
   } catch (err) {
-    document.getElementById("loadingState").textContent = "Something went wrong loading your wishlist. Please refresh.";
+    loading.className = "loading-state";
+    loading.style.display = "block";
+    loading.innerHTML = `
+      <p>${err.message || "Something went wrong loading your wishlist."}</p>
+      <button class="btn btn-outline btn-sm" id="wishlistRetryBtn" type="button">Try Again</button>`;
+    document.getElementById("wishlistRetryBtn").addEventListener("click", initWishlistPage);
   }
 }
 

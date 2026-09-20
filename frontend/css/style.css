@@ -19,6 +19,26 @@
 
 *{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
+
+/* ---------- Accessibility: skip link + visible keyboard focus ---------- */
+.skip-link{
+  position:absolute; top:-48px; left:12px; z-index:1000;
+  background:var(--ink-maroon); color:var(--white); padding:10px 18px;
+  border-radius:var(--radius); text-decoration:none; font-size:.85rem; font-weight:600;
+  transition:top .15s ease;
+}
+.skip-link:focus{top:12px;}
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+.product-card:focus-visible, .mini-card:focus-visible{
+  outline:2px solid var(--zari-gold); outline-offset:2px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:.001ms !important; animation-iteration-count:1 !important;
+    transition-duration:.001ms !important; scroll-behavior:auto !important;
+  }
+}
 body{
   margin:0;
   background:var(--ivory);
@@ -255,6 +275,33 @@ section{padding:76px 0;}
 .product-card .price{color:var(--ink-maroon); font-weight:700; font-size:.95rem;}
 .empty-state{text-align:center; padding:60px 20px; color:var(--charcoal-soft);}
 .loading-state{text-align:center; padding:60px 20px; color:var(--charcoal-soft);}
+.loading-state[hidden], .loading-state.is-hidden{display:none;}
+
+/* ---------- Skeleton loading placeholders ---------- */
+@keyframes vf-shimmer{
+  0%{background-position:-200px 0;}
+  100%{background-position:calc(200px + 100%) 0;}
+}
+.skeleton-thumb, .skeleton-line{
+  background:linear-gradient(90deg, var(--ivory-deep) 25%, var(--line) 37%, var(--ivory-deep) 63%);
+  background-size:400px 100%;
+  animation:vf-shimmer 1.4s ease-in-out infinite;
+  border-radius:4px;
+}
+.skeleton-card{background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);}
+.skeleton-card .skeleton-thumb{aspect-ratio:4/5; border-radius:0;}
+.skeleton-card .skeleton-line{height:12px; margin:10px 16px;}
+.skeleton-row{display:flex; gap:14px; align-items:center; padding:14px 0; border-bottom:1px solid var(--line);}
+.skeleton-thumb-sm{width:64px; height:80px; flex-shrink:0;}
+.skeleton-row .skeleton-line{height:11px; margin:8px 0;}
+
+/* ---------- Trust strip (footer, checkout) ---------- */
+.trust-strip{
+  display:flex; flex-wrap:wrap; gap:18px 28px; justify-content:center;
+  padding:16px 20px; margin:0 0 30px; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  font-size:.8rem; color:var(--charcoal-soft);
+}
+.trust-strip span{display:flex; align-items:center; gap:7px; white-space:nowrap;}
 
 .modal-backdrop{
   position:fixed; inset:0; background:rgba(43,33,27,.55); z-index:200;

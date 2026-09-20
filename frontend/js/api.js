@@ -1,5 +1,17 @@
 const VF_TOKEN_KEY = "vf_admin_token";
 
+// Wraps the native fetch: turns a network-level failure (offline, DNS,
+// blocked request) into one friendly, consistent message instead of a raw
+// "Failed to fetch" bubbling up to a toast. Server-returned errors (4xx/5xx)
+// are untouched here — callers still read res.ok / res.json() themselves.
+async function vfFetch(url, options) {
+  try {
+    return await fetch(url, options);
+  } catch (err) {
+    throw new Error("Please check your internet connection and try again.");
+  }
+}
+
 const api = {
   base: "/api",
 
@@ -18,7 +30,7 @@ const api = {
   },
 
   async getCategories() {
-    const res = await fetch(`${this.base}/categories`);
+    const res = await vfFetch(`${this.base}/categories`);
     if (!res.ok) throw new Error("Could not load categories.");
     return res.json();
   },
@@ -32,13 +44,13 @@ const api = {
     if (category && category !== "all") params.set("category", category);
     if (subtype && subtype !== "all") params.set("subtype", subtype);
     const qs = params.toString();
-    const res = await fetch(`${this.base}/sarees${qs ? "?" + qs : ""}`);
+    const res = await vfFetch(`${this.base}/sarees${qs ? "?" + qs : ""}`);
     if (!res.ok) throw new Error("Could not load the catalog.");
     return res.json();
   },
 
   async getSaree(id) {
-    const res = await fetch(`${this.base}/sarees/${id}`);
+    const res = await vfFetch(`${this.base}/sarees/${id}`);
     if (!res.ok) throw new Error("Saree not found.");
     return res.json();
   },
@@ -51,7 +63,7 @@ const api = {
     if (category && category !== "all") params.set("category", category);
     if (subtype && subtype !== "all") params.set("subtype", subtype);
     const qs = params.toString();
-    const res = await fetch(`${this.base}/sarees${qs ? "?" + qs : ""}`, {
+    const res = await vfFetch(`${this.base}/sarees${qs ? "?" + qs : ""}`, {
       headers: { Authorization: `Bearer ${this.getToken()}` }
     });
     if (!res.ok) throw new Error("Could not load the catalog.");
@@ -59,7 +71,7 @@ const api = {
   },
 
   async login(email, password) {
-    const res = await fetch(`${this.base}/auth/login`, {
+    const res = await vfFetch(`${this.base}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
@@ -71,7 +83,7 @@ const api = {
   },
 
   async authedFormRequest(url, method, formData) {
-    const res = await fetch(url, {
+    const res = await vfFetch(url, {
       method,
       headers: { Authorization: `Bearer ${this.getToken()}` },
       body: formData
@@ -90,7 +102,7 @@ const api = {
   },
 
   async deleteSaree(id) {
-    const res = await fetch(`${this.base}/sarees/${id}`, {
+    const res = await vfFetch(`${this.base}/sarees/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${this.getToken()}` }
     });
@@ -100,7 +112,7 @@ const api = {
   },
 
   async changeAdminPassword({ currentPassword, newPassword }) {
-    const res = await fetch(`${this.base}/auth/change-password`, {
+    const res = await vfFetch(`${this.base}/auth/change-password`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.getToken()}` },
       body: JSON.stringify({ currentPassword, newPassword })
@@ -111,7 +123,7 @@ const api = {
   },
 
   async resetSeed() {
-    const res = await fetch(`${this.base}/sarees/reset/seed`, {
+    const res = await vfFetch(`${this.base}/sarees/reset/seed`, {
       method: "POST",
       headers: { Authorization: `Bearer ${this.getToken()}` }
     });
@@ -127,7 +139,7 @@ const api = {
       if (status && status !== "all") params.set("status", status);
       if (search) params.set("search", search);
       const qs = params.toString();
-      const res = await fetch(`${api.base}/admin/orders${qs ? "?" + qs : ""}`, {
+      const res = await vfFetch(`${api.base}/admin/orders${qs ? "?" + qs : ""}`, {
         headers: { Authorization: `Bearer ${api.getToken()}` }
       });
       const data = await res.json().catch(() => ([]));
@@ -135,7 +147,7 @@ const api = {
       return data;
     },
     async updateStatus(id, { status, paymentStatus } = {}) {
-      const res = await fetch(`${api.base}/admin/orders/${id}/status`, {
+      const res = await vfFetch(`${api.base}/admin/orders/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${api.getToken()}` },
         body: JSON.stringify({ status, paymentStatus })
@@ -152,7 +164,7 @@ const api = {
       const params = new URLSearchParams();
       if (status && status !== "all") params.set("status", status);
       const qs = params.toString();
-      const res = await fetch(`${api.base}/admin/complaints${qs ? "?" + qs : ""}`, {
+      const res = await vfFetch(`${api.base}/admin/complaints${qs ? "?" + qs : ""}`, {
         headers: { Authorization: `Bearer ${api.getToken()}` }
       });
       const data = await res.json().catch(() => ([]));
@@ -160,7 +172,7 @@ const api = {
       return data;
     },
     async updateStatus(id, { status, adminNote } = {}) {
-      const res = await fetch(`${api.base}/admin/complaints/${id}/status`, {
+      const res = await vfFetch(`${api.base}/admin/complaints/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${api.getToken()}` },
         body: JSON.stringify({ status, adminNote })
@@ -174,7 +186,7 @@ const api = {
   /* ---------- Admin: CRM dashboard ---------- */
   crm: {
     async summary() {
-      const res = await fetch(`${api.base}/admin/crm/summary`, {
+      const res = await vfFetch(`${api.base}/admin/crm/summary`, {
         headers: { Authorization: `Bearer ${api.getToken()}` }
       });
       const data = await res.json().catch(() => ({}));
@@ -197,7 +209,7 @@ const api = {
     getUser() { return this._user; },
 
     async _fetch(url, options = {}) {
-      const res = await fetch(url, {
+      const res = await vfFetch(url, {
         ...options,
         credentials: "include",
         headers: {
@@ -226,7 +238,7 @@ const api = {
     // Resolves quietly (not an error) if the visitor is a guest.
     async silentRefresh() {
       try {
-        const res = await fetch(`${api.base}/auth/customer/refresh`, {
+        const res = await vfFetch(`${api.base}/auth/customer/refresh`, {
           method: "POST",
           credentials: "include"
         });
@@ -266,7 +278,7 @@ const api = {
 
     async logout() {
       try {
-        await fetch(`${api.base}/auth/customer/logout`, { method: "POST", credentials: "include" });
+        await vfFetch(`${api.base}/auth/customer/logout`, { method: "POST", credentials: "include" });
       } catch (err) { /* ignore network errors on logout */ }
       this._accessToken = null;
       this._user = null;
@@ -275,7 +287,7 @@ const api = {
     // These two run before the customer is logged in, so they don't go
     // through this.request() (no access token to attach yet).
     async forgotPassword(email) {
-      const res = await fetch(`${api.base}/auth/customer/forgot-password`, {
+      const res = await vfFetch(`${api.base}/auth/customer/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
@@ -286,7 +298,7 @@ const api = {
     },
 
     async resetPassword({ email, otp, newPassword }) {
-      const res = await fetch(`${api.base}/auth/customer/reset-password`, {
+      const res = await vfFetch(`${api.base}/auth/customer/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp, newPassword })
@@ -422,7 +434,7 @@ const api = {
   reviews: {
     // Public — no login required to read.
     async forSaree(sareeId) {
-      const res = await fetch(`${api.base}/reviews/saree/${sareeId}`);
+      const res = await vfFetch(`${api.base}/reviews/saree/${sareeId}`);
       const data = await res.json().catch(() => ({ average: 0, count: 0, reviews: [] }));
       if (!res.ok) throw new Error(data.error || "Could not load reviews.");
       return data;
