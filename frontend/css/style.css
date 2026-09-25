@@ -480,6 +480,25 @@ footer.site a:hover{color:var(--zari-gold-light);}
 .summary-row{display:flex; justify-content:space-between; padding:.5em 0; font-size:.9rem; color:var(--charcoal-soft);}
 .summary-row.total{border-top:1px dashed var(--line); margin-top:.5em; padding-top:1em; font-size:1.05rem; font-weight:700; color:var(--charcoal);}
 
+/* ---------- Checkout step wizard ---------- */
+.checkout-steps{display:flex; list-style:none; margin:0 0 1.6em; padding:0;}
+.checkout-steps li{
+  flex:1; text-align:center; position:relative; font-size:.78rem; font-weight:600; color:var(--charcoal-soft);
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+}
+.checkout-steps li::before{
+  content:""; position:absolute; top:15px; left:-50%; width:100%; height:2px; background:var(--line); z-index:0;
+}
+.checkout-steps li:first-child::before{display:none;}
+.checkout-steps .cs-num{
+  width:32px; height:32px; border-radius:50%; background:var(--white); border:2px solid var(--line);
+  display:flex; align-items:center; justify-content:center; font-size:.85rem; color:var(--charcoal-soft); z-index:1;
+}
+.checkout-steps li.active .cs-num, .checkout-steps li.done .cs-num{border-color:var(--ink-maroon); color:var(--white); background:var(--ink-maroon);}
+.checkout-steps li.done::before{background:var(--ink-maroon);}
+.checkout-steps li.active .cs-label, .checkout-steps li.done .cs-label{color:var(--charcoal); font-weight:700;}
+@media (max-width:480px){.checkout-steps .cs-label{display:none;}}
+
 /* ---------- Addresses & tabs (profile page) ---------- */
 .tabbar{display:flex; gap:6px; margin-bottom:2em; flex-wrap:wrap;}
 .tabbar button{

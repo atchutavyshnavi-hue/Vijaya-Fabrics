@@ -54,62 +54,98 @@
 
     <div class="cart-layout" id="checkoutLayout" style="display:none;">
       <div>
-        <div class="admin-card" style="margin-bottom:20px;">
-          <h3 style="margin-top:0;">Deliver To</h3>
-          <div id="addressList"></div>
+        <ol class="checkout-steps" id="checkoutSteps" aria-label="Checkout progress">
+          <li data-step="1" class="active"><span class="cs-num">1</span><span class="cs-label">Address</span></li>
+          <li data-step="2"><span class="cs-num">2</span><span class="cs-label">Order Summary</span></li>
+          <li data-step="3"><span class="cs-num">3</span><span class="cs-label">Payment</span></li>
+        </ol>
 
-          <div id="addAddressToggle">
-            <button type="button" class="btn btn-outline btn-sm" id="showAddAddressBtn">+ Add a new address</button>
+        <div class="checkout-step-panel" data-step-panel="1">
+          <div class="admin-card" style="margin-bottom:20px;">
+            <h3 style="margin-top:0;">Deliver To</h3>
+            <div id="addressList"></div>
+
+            <div id="addAddressToggle">
+              <button type="button" class="btn btn-outline btn-sm" id="showAddAddressBtn">+ Add a new address</button>
+            </div>
+
+            <form id="addAddressForm" style="display:none; margin-top:1.2em;">
+              <div class="form-field">
+                <label for="caLabel">Label</label>
+                <input type="text" id="caLabel" placeholder="e.g. Home, Office" value="Home">
+              </div>
+              <div class="form-field">
+                <label for="caLine1">Address Line 1</label>
+                <input type="text" id="caLine1" required>
+              </div>
+              <div class="form-field">
+                <label for="caLine2">Address Line 2 (optional)</label>
+                <input type="text" id="caLine2">
+              </div>
+              <div class="form-field">
+                <label for="caCity">City</label>
+                <input type="text" id="caCity" required>
+              </div>
+              <div class="form-field">
+                <label for="caState">State</label>
+                <input type="text" id="caState" required value="Andhra Pradesh">
+              </div>
+              <div class="form-field">
+                <label for="caPincode">PIN Code</label>
+                <input type="text" id="caPincode" required pattern="\d{6}" maxlength="6" placeholder="6-digit PIN">
+              </div>
+              <div style="display:flex; gap:10px;">
+                <button type="submit" class="btn btn-primary btn-sm">Save Address</button>
+                <button type="button" class="btn btn-outline btn-sm" id="cancelAddAddress">Cancel</button>
+              </div>
+            </form>
           </div>
 
-          <form id="addAddressForm" style="display:none; margin-top:1.2em;">
+          <div class="admin-card">
+            <h3 style="margin-top:0;">Recipient Details</h3>
             <div class="form-field">
-              <label for="caLabel">Label</label>
-              <input type="text" id="caLabel" placeholder="e.g. Home, Office" value="Home">
-            </div>
-            <div class="form-field">
-              <label for="caLine1">Address Line 1</label>
-              <input type="text" id="caLine1" required>
+              <label for="recName">Full Name</label>
+              <input type="text" id="recName" required>
             </div>
             <div class="form-field">
-              <label for="caLine2">Address Line 2 (optional)</label>
-              <input type="text" id="caLine2">
+              <label for="recPhone">Phone (for delivery updates)</label>
+              <input type="tel" id="recPhone" required minlength="10">
             </div>
-            <div class="form-field">
-              <label for="caCity">City</label>
-              <input type="text" id="caCity" required>
-            </div>
-            <div class="form-field">
-              <label for="caState">State</label>
-              <input type="text" id="caState" required value="Andhra Pradesh">
-            </div>
-            <div class="form-field">
-              <label for="caPincode">PIN Code</label>
-              <input type="text" id="caPincode" required pattern="\d{6}" maxlength="6" placeholder="6-digit PIN">
-            </div>
-            <div style="display:flex; gap:10px;">
-              <button type="submit" class="btn btn-primary btn-sm">Save Address</button>
-              <button type="button" class="btn btn-outline btn-sm" id="cancelAddAddress">Cancel</button>
-            </div>
-          </form>
+          </div>
+
+          <p class="auth-error" id="step1Error" style="display:none;"></p>
+          <button class="btn btn-primary" id="step1NextBtn" type="button" style="margin-top:1.2em;">Continue to Order Summary</button>
         </div>
 
-        <div class="admin-card">
-          <h3 style="margin-top:0;">Recipient Details</h3>
-          <div class="form-field">
-            <label for="recName">Full Name</label>
-            <input type="text" id="recName" required>
+        <div class="checkout-step-panel" data-step-panel="2" style="display:none;">
+          <div class="admin-card">
+            <h3 style="margin-top:0;">Review Your Order</h3>
+            <div id="reviewLines"></div>
+            <p style="font-size:.85rem; color:var(--charcoal-soft); margin-top:1.2em; padding-top:1em; border-top:1px solid var(--line);">
+              Delivering to: <strong id="reviewAddressText"></strong>
+            </p>
           </div>
-          <div class="form-field">
-            <label for="recPhone">Phone (for delivery updates)</label>
-            <input type="tel" id="recPhone" required minlength="10">
+          <div style="display:flex; gap:10px; margin-top:1.2em;">
+            <button class="btn btn-outline" id="step2BackBtn" type="button">Back</button>
+            <button class="btn btn-primary" id="step2NextBtn" type="button">Continue to Payment</button>
           </div>
-          <div class="form-field">
-            <label>Payment Method</label>
-            <select id="paymentMethod">
-              <option value="Cash on Delivery">Cash on Delivery</option>
-            </select>
-            <p style="font-size:.78rem; color:var(--charcoal-soft); margin-top:.5em;">Online payment is coming soon — every order today ships Cash on Delivery.</p>
+        </div>
+
+        <div class="checkout-step-panel" data-step-panel="3" style="display:none;">
+          <div class="admin-card">
+            <h3 style="margin-top:0;">Payment Method</h3>
+            <div class="form-field">
+              <label for="paymentMethod">Choose how you'll pay</label>
+              <select id="paymentMethod">
+                <option value="Cash on Delivery">Cash on Delivery</option>
+              </select>
+              <p style="font-size:.78rem; color:var(--charcoal-soft); margin-top:.5em;">Online payment is coming soon — every order today ships Cash on Delivery.</p>
+            </div>
+          </div>
+          <p class="auth-error" id="checkoutError" style="display:none;"></p>
+          <div style="display:flex; gap:10px; margin-top:1.2em;">
+            <button class="btn btn-outline" id="step3BackBtn" type="button">Back</button>
+            <button class="btn btn-primary" id="placeOrderBtn" type="button">Place Order</button>
           </div>
         </div>
       </div>
@@ -117,13 +153,14 @@
       <div class="summary-card">
         <h3 style="margin-top:0;">Order Summary</h3>
         <div id="summaryLines"></div>
+        <div class="summary-row"><span>Subtotal</span><span id="summarySubtotal">₹0</span></div>
+        <div class="summary-row"><span>Shipping</span><span>Free</span></div>
         <div class="summary-row total"><span>Total</span><span id="summaryTotal">₹0</span></div>
-        <button class="btn btn-primary" id="placeOrderBtn" style="width:100%; justify-content:center; margin-top:1.2em;">Place Order</button>
-        <p class="auth-error" id="checkoutError" style="display:none;"></p>
       </div>
     </div>
 
     <div class="empty-state" id="successState" style="display:none;">
+      <span class="eyebrow">Confirmation</span>
       <h3>Order placed! 🎉</h3>
       <p id="successText"></p>
       <a href="profile.html?tab=orders" class="btn btn-primary" style="margin-top:1em;">Track Your Order</a>

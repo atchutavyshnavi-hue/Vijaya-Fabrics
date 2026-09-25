@@ -1,5 +1,6 @@
 let checkoutCart = null;
 let selectedAddressId = null;
+let currentStep = 1;
 
 function addressCardHtml(addr, selected) {
   return `
@@ -41,12 +42,70 @@ function renderAddresses() {
   });
 }
 
+// The order summary sidebar shows the full price breakdown and stays
+// visible through every step, so the customer always knows what they'll
+// pay before they reach the payment step.
 function renderSummary() {
   document.getElementById("summaryLines").innerHTML = checkoutCart.items.map((it) => `
     <div class="summary-row"><span>${it.saree.name} × ${it.qty}</span><span>${formatINR(it.lineTotal)}</span></div>
   `).join("");
+  document.getElementById("summarySubtotal").textContent = formatINR(checkoutCart.total);
   document.getElementById("summaryTotal").textContent = formatINR(checkoutCart.total);
 }
+
+function renderReview() {
+  document.getElementById("reviewLines").innerHTML = checkoutCart.items.map((it) => `
+    <div class="summary-row"><span>${it.saree.name} × ${it.qty}</span><span>${formatINR(it.lineTotal)}</span></div>
+  `).join("");
+  const user = api.customer.getUser();
+  const addr = (user?.addresses || []).find((a) => a.id === selectedAddressId);
+  const name = document.getElementById("recName").value.trim();
+  document.getElementById("reviewAddressText").textContent = addr
+    ? `${name}, ${addr.line1}${addr.line2 ? ", " + addr.line2 : ""}, ${addr.city}, ${addr.state} — ${addr.pincode}`
+    : "";
+}
+
+/* ---------- Step navigation ---------- */
+function goToStep(step) {
+  currentStep = step;
+  document.querySelectorAll(".checkout-step-panel").forEach((panel) => {
+    panel.style.display = Number(panel.dataset.stepPanel) === step ? "block" : "none";
+  });
+  document.querySelectorAll("#checkoutSteps li").forEach((li) => {
+    const liStep = Number(li.dataset.step);
+    li.classList.toggle("active", liStep === step);
+    li.classList.toggle("done", liStep < step);
+  });
+  document.getElementById("checkoutLayout").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+document.getElementById("step1NextBtn").addEventListener("click", () => {
+  const errorEl = document.getElementById("step1Error");
+  errorEl.style.display = "none";
+
+  const name = document.getElementById("recName").value.trim();
+  const phone = document.getElementById("recPhone").value.trim();
+  const user = api.customer.getUser();
+  const addr = (user?.addresses || []).find((a) => a.id === selectedAddressId);
+
+  if (!addr) {
+    errorEl.textContent = "Please select or add a delivery address.";
+    errorEl.style.display = "block";
+    return;
+  }
+  if (!name || !phone || phone.length < 10) {
+    errorEl.textContent = "Please enter a valid recipient name and phone number.";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  renderReview();
+  goToStep(2);
+});
+
+document.getElementById("step2BackBtn").addEventListener("click", () => goToStep(1));
+document.getElementById("step2NextBtn").addEventListener("click", () => goToStep(3));
+document.getElementById("step3BackBtn").addEventListener("click", () => goToStep(2));
 
 document.getElementById("showAddAddressBtn").addEventListener("click", () => {
   document.getElementById("addAddressToggle").style.display = "none";
@@ -94,14 +153,12 @@ document.getElementById("placeOrderBtn").addEventListener("click", async () => {
   const user = api.customer.getUser();
   const addr = (user?.addresses || []).find((a) => a.id === selectedAddressId);
 
-  if (!name || !phone || phone.length < 10) {
-    errorEl.textContent = "Please enter a valid recipient name and phone number.";
+  if (!addr || !name || !phone || phone.length < 10) {
+    // Shouldn't normally happen (step 1 already validated this), but guards
+    // against the customer navigating back and clearing something.
+    errorEl.textContent = "Please go back and complete your delivery details.";
     errorEl.style.display = "block";
-    return;
-  }
-  if (!addr) {
-    errorEl.textContent = "Please select or add a delivery address.";
-    errorEl.style.display = "block";
+    goToStep(1);
     return;
   }
 
@@ -148,14 +205,20 @@ async function initCheckoutPage() {
     return;
   }
 
+  const loading = document.getElementById("loadingState");
+  loading.style.display = "block";
+  loading.innerHTML = vfSkeletonRows(2);
   try {
     checkoutCart = await api.cart.get();
   } catch (err) {
-    document.getElementById("loadingState").textContent = err.message || "Could not load your cart.";
+    loading.innerHTML = `
+      <p>${err.message || "Could not load your cart."}</p>
+      <button class="btn btn-outline btn-sm" id="checkoutRetryBtn" type="button">Try Again</button>`;
+    document.getElementById("checkoutRetryBtn").addEventListener("click", initCheckoutPage);
     return;
   }
 
-  document.getElementById("loadingState").style.display = "none";
+  loading.style.display = "none";
 
   if (!checkoutCart.items.length) {
     document.getElementById("emptyState").style.display = "block";
@@ -168,6 +231,7 @@ async function initCheckoutPage() {
   document.getElementById("recPhone").value = user?.phone || "";
   renderAddresses();
   renderSummary();
+  goToStep(1);
 }
 
 document.addEventListener("DOMContentLoaded", initCheckoutPage);

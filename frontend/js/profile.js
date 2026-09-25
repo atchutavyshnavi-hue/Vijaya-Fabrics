@@ -190,6 +190,14 @@ function statusClass(status) {
 
 const CUSTOMER_CANCELLABLE_STATUSES = ["Received", "Processing", "Packed"];
 
+// The backend's order-status value stays "Received" (matches the admin
+// panel and the OMS status enum) — this only relabels it for the customer
+// tracker/pill, which reads more clearly as "Order Placed" to a shopper.
+const ORDER_STATUS_DISPLAY = { Received: "Order Placed" };
+function orderStatusLabel(status) {
+  return ORDER_STATUS_DISPLAY[status] || status;
+}
+
 function orderCardHtml(order) {
   const date = new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
   const stepsHtml = order.orderStatus === "Cancelled"
@@ -197,7 +205,7 @@ function orderCardHtml(order) {
     : `<div class="tracker">
         ${ORDER_STEPS.map((step, i) => {
           const idx = ORDER_STEPS.indexOf(order.orderStatus);
-          return `<div class="tracker-step ${i <= idx ? "done" : ""}"><span class="dot"></span><span>${step}</span></div>`;
+          return `<div class="tracker-step ${i <= idx ? "done" : ""}"><span class="dot"></span><span>${orderStatusLabel(step)}</span></div>`;
         }).join("")}
       </div>`;
   const canCancel = CUSTOMER_CANCELLABLE_STATUSES.includes(order.orderStatus);
@@ -209,7 +217,7 @@ function orderCardHtml(order) {
           <div class="onum">${order.orderNumber}</div>
           <div class="odate">${date}</div>
         </div>
-        <span class="status-pill ${statusClass(order.orderStatus)}">${order.orderStatus}</span>
+        <span class="status-pill ${statusClass(order.orderStatus)}">${orderStatusLabel(order.orderStatus)}</span>
       </div>
       ${stepsHtml}
       <div class="order-items-mini">
